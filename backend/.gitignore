@@ -1,0 +1,136 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.*.local
+
+# Node modules
+node_modules/
+jspm_packages/
+
+# Binaries
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+coverage/
+.cache/
+
+# Dependency directories
+bower_components/
+.pnp/
+.pnp.js
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*~
+
+# Debug and Error Reports
+error.log
+error-report.log
+*.pid
+*.seed
+
+# System files
+*.bak
+*.tmp
+*.lock
+*.csv
+*.orig
+*.gz
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+
+# Sentry files
+.sentryclirc
+
+# Editor-specific files
+*.sublime-project
+*.sublime-workspace
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# npm cache files
+.npm
+.yarn-integrity
+.pnpm-debug.log
+
+# Optional npm cache directory
+.npmcache/
+
+# Optional npm package lock files
+package-lock.json
+yarn.lock
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Output of 'npm pack'
+*.tgz
+
+# VS Code
+.vscode/
+.history/
+
+# JetBrains
+.idea/
+*.iml
+out/
+*.ipr
+*.iws
+*.jbm
+
+# Others
+*.env.local
+.env.local
+.DS_Store
+.npmrc
+yarn-error.log
+
+# Build directory for Nuxt or Next.js projects
+.nuxt/
+.next/
+
+# Debugging
+*.log
+logs
+*.debug.log
+
+# Local env files
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+
+# Ignore docker
+docker-compose.override.yml
+
+# Exclude lock files
+*.lock
+pnpm-lock.yaml
