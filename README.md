@@ -1,7 +1,7 @@
 # PhotoPostLocal
 
 ## Descripción
-PhotoPostLocal es una aplicación compuesta por un `backend` desarrollado en Node.js con Express y un `frontend` desarrollado en Flutter. La aplicación permite a los usuarios gestionar y visualizar publicaciones de fotos.
+PhotoPostLocal es una aplicación compuesta por un `backend` desarrollado en Node.js con Express y un `frontend` desarrollado en Flutter.
 
 ## Estructura del Proyecto
 - `backend/`: Contiene la API RESTful construida con Node.js y Express, utilizando MySQL como base de datos.
