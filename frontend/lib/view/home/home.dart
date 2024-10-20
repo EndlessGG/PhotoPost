@@ -106,4 +106,5 @@ class HomeView extends StatelessWidget {
   }
 }
 
-void main() => runApp(MaterialApp(home: HomeView()));
+
+
