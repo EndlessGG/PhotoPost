@@ -1,9 +1,11 @@
 const express = require('express')
-//const userRoutes = require('./routes/userRoutes')
+const routes = require('./routes/route')
 
 const app = express()
 
 app.use(express.json())
-//app.use('/api', userRoutes)
+
+// uso de rutas (api)
+app.use('/api', routes)
 
 module.exports = app
