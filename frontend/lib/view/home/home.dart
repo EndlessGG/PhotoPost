@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../new_project/new_project.dart';
 
 class HomeView extends StatelessWidget {
   @override
@@ -20,7 +21,7 @@ class HomeView extends StatelessWidget {
         ),
       ),
       drawer: Drawer(
-        //  menú lateral
+        // Menú lateral
         child: ListView(
           children: <Widget>[
             DrawerHeader(
@@ -54,7 +55,6 @@ class HomeView extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Espacio para la lista de proyectos
             Expanded(
               child: ListView(
                 children: [
@@ -70,6 +70,12 @@ class HomeView extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Acción para agregar un nuevo proyecto
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    NewProjectView()), // Navegación a NewProjectView
+          );
         },
         child: Icon(Icons.add),
       ),
@@ -85,7 +91,7 @@ class HomeView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 100, // Altura de la imagen simulada
+              height: 100,
               color: Colors.grey[300],
               child: Center(
                 child: Icon(Icons.image, size: 50, color: Colors.grey[500]),
@@ -105,6 +111,3 @@ class HomeView extends StatelessWidget {
     );
   }
 }
-
-
-
