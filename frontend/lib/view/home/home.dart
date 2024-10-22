@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import '../new_project/new_project.dart';
-import '../project_view/project_view.dart'; // Asegúrate de importar tu archivo de ProjectView
+import 'package:provider/provider.dart';
+import '../../controller/project_controller.dart'; // Import the ProjectController
+import '../project_view/project_view.dart'; // Import your ProjectView
+import '../new_project/new_project.dart'; // Import your NewProjectView
 
 class HomeView extends StatelessWidget {
   @override
@@ -29,7 +30,8 @@ class HomeView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
-              child: Text('Menú', style: TextStyle(color: Colors.white, fontSize: 24)),
+              child: Text('Menú',
+                  style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
             ListTile(title: Text('Opción 1'), onTap: () {}),
             ListTile(title: Text('Opción 2'), onTap: () {}),
@@ -38,27 +40,33 @@ class HomeView extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-
-              child: ListView(
-                children: [
-                  _buildProjectCard(context, 'Nombre proyecto'),
-                  _buildProjectCard(context, 'Nombre proyecto2'),
-                ],
-
-              ),
-            ),
-          ],
+        child: Consumer<ProjectController>(
+          // Listening to ProjectController changes
+          builder: (context, controller, child) {
+            return ListView.builder(
+              itemCount: controller.projects.length,
+              itemBuilder: (context, index) {
+                final project = controller.projects[index];
+                return _buildProjectCard(
+                    context, project.name, project.id); // Pass project id
+              },
+            );
+          },
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => NewProjectView()),
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (context) => DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.7,
+              maxChildSize: 1.0,
+              builder: (_, controller) =>
+                  NewProjectView(), // NewProjectView allows creating new projects
+            ),
           );
         },
         child: Icon(Icons.add),
@@ -66,18 +74,19 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildProjectCard(BuildContext context, String projectName) {
+  Widget _buildProjectCard(
+      BuildContext context, String projectName, String projectId) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 10),
       child: InkWell(
-        // Utilizamos InkWell para agregar la capacidad de hacer clic en la tarjeta
         onTap: () {
-          // Navegar a la vista del proyecto
+          // Navigate to ProjectView, passing the selected project's ID
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    ProjectView()), // Navegación a ProjectView
+              builder: (context) => ProjectView(
+                  projectId: projectId), // Pass projectId to ProjectView
+            ),
           );
         },
         child: Padding(
@@ -92,14 +101,10 @@ class HomeView extends StatelessWidget {
                   child: Icon(Icons.image, size: 50, color: Colors.grey[500]),
                 ),
               ),
-
               SizedBox(height: 10),
               Text(
                 projectName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),

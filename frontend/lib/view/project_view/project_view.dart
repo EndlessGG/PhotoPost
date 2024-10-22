@@ -1,12 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../grid_view/grid_view.dart'; // Import the Canvas view
+import '../../controller/project_controller.dart'; // Import the ProjectController
 
 class ProjectView extends StatelessWidget {
+  final String projectId;
+
+  ProjectView({required this.projectId});
+
   @override
   Widget build(BuildContext context) {
+    // Fetch the project by ID from the controller
+    final project = Provider.of<ProjectController>(context, listen: true)
+        .getProjectById(projectId);
+
+    if (project == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Project Not Found'),
+        ),
+        body: Center(
+          child: Text('The requested project could not be found.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('PhotoPost', style: TextStyle(color: Colors.black)),
+        title: Text('PhotoPost: ${project.name}',
+            style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         centerTitle: true,
         elevation: 0, // No shadow
@@ -18,7 +40,7 @@ class ProjectView extends StatelessWidget {
           children: [
             // Project name
             Text(
-              'Proyecto "Central"',
+              'Proyecto "${project.name}"',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
@@ -35,28 +57,26 @@ class ProjectView extends StatelessWidget {
             // List of rooms
             Expanded(
               child: ListView(
-                children: [
-                  _buildRoomItem(context, 'Techo'),
-                  _buildRoomItem(context, 'Sala'),
-                  _buildRoomItem(context, 'Jardin'),
-                ],
+                children: project.rooms
+                    .map((roomName) => _buildRoomItem(context, roomName))
+                    .toList(),
               ),
             ),
           ],
         ),
       ),
-      // Floating action button
+      // Floating action button to add a new room
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Handle add new room
+          _showAddRoomDialog(context, projectId);
         },
         child: Icon(Icons.add),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white, // Set button background color to black
       ),
     );
   }
 
-  // Method to build room items and navigate to Canvas
+  // Method to build room items and navigate to GridView
   Widget _buildRoomItem(BuildContext context, String roomName) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 10),
@@ -64,14 +84,52 @@ class ProjectView extends StatelessWidget {
         title: Text(roomName, style: TextStyle(fontSize: 18)),
         trailing: Icon(Icons.arrow_forward),
         onTap: () {
-          // Navigate to Canvas view when a room is selected
+          // Navigate to GridView when a room is selected
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => GridViewS()), // Navigate to Canvas
+                builder: (context) => GridViewS()), // Navigate to GridView
           );
         },
       ),
+    );
+  }
+
+  // Method to show the dialog for adding a new room
+  void _showAddRoomDialog(BuildContext context, String projectId) {
+    final TextEditingController _roomController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Agregar nueva habitación'),
+          content: TextField(
+            controller: _roomController,
+            decoration: InputDecoration(hintText: 'Nombre de la habitación'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Agregar'),
+              onPressed: () {
+                final roomName = _roomController.text;
+                if (roomName.isNotEmpty) {
+                  // Add the room to the selected project
+                  Provider.of<ProjectController>(context, listen: false)
+                      .addRoomToProject(projectId, roomName);
+                  Navigator.of(context).pop(); // Close dialog after adding
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
