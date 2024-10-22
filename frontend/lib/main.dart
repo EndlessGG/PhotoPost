@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
-import './view/home/home.dart'; // Asegúrate de importar correctamente HomeView
-
+import 'package:provider/provider.dart';
+import 'controller/project_controller.dart';
+import './view/home/home.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProjectController()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Project Manager',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: HomeView(), 
+      home: HomeView(),
     );
   }
 }
