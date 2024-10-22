@@ -42,8 +42,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-<<<<<<< HEAD
-=======
-# Ignorar archivo de configuración de variables de entorno
->>>>>>> 523628fc9aa18fa0e2efe0b6483f40d1bb712cb8
 .env
+.vscode/
+
