@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './view/home/home.dart'; // Asegúrate de importar correctamente HomeView
 
+
 void main() {
   runApp(const MyApp());
 }
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: HomeView(), // Establece HomeView como la vista inicial
+      home: HomeView(), 
     );
   }
 }

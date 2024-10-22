@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../new_project/new_project.dart';
 import '../project_view/project_view.dart'; // Asegúrate de importar tu archivo de ProjectView
 
@@ -11,7 +12,7 @@ class HomeView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text('¡Hola, (nombre)!'),
-            SizedBox(width: 10), // Espacio entre el texto y el icono
+            SizedBox(width: 10),
             IconButton(
               icon: Icon(Icons.account_circle),
               onPressed: () {
@@ -22,33 +23,16 @@ class HomeView extends StatelessWidget {
         ),
       ),
       drawer: Drawer(
-        // Menú lateral
         child: ListView(
           children: <Widget>[
             DrawerHeader(
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
-              child: Text(
-                'Menú',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
+              child: Text('Menú', style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
-            ListTile(
-              title: Text('Opción 1'),
-              onTap: () {
-                // Navegar a otra página
-              },
-            ),
-            ListTile(
-              title: Text('Opción 2'),
-              onTap: () {
-                // Navegar a otra página
-              },
-            ),
+            ListTile(title: Text('Opción 1'), onTap: () {}),
+            ListTile(title: Text('Opción 2'), onTap: () {}),
           ],
         ),
       ),
@@ -57,11 +41,13 @@ class HomeView extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
+
               child: ListView(
                 children: [
                   _buildProjectCard(context, 'Nombre proyecto'),
                   _buildProjectCard(context, 'Nombre proyecto2'),
                 ],
+
               ),
             ),
           ],
@@ -70,12 +56,9 @@ class HomeView extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Acción para agregar un nuevo proyecto
           Navigator.push(
             context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    NewProjectView()), // Navegación a NewProjectView
+            MaterialPageRoute(builder: (context) => NewProjectView()),
           );
         },
         child: Icon(Icons.add),
@@ -109,6 +92,7 @@ class HomeView extends StatelessWidget {
                   child: Icon(Icons.image, size: 50, color: Colors.grey[500]),
                 ),
               ),
+
               SizedBox(height: 10),
               Text(
                 projectName,
