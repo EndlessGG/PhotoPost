@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../canvas/canvas.dart'; // Import the Canvas view
+import '../grid_view/grid_view.dart'; // Import the Canvas view
 
 class ProjectView extends StatelessWidget {
   @override
@@ -68,7 +68,7 @@ class ProjectView extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => Canvas()), // Navigate to Canvas
+                builder: (context) => GridViewS()), // Navigate to Canvas
           );
         },
       ),
