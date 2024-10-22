@@ -44,3 +44,4 @@ app.*.map.json
 
 # Ignorar archivo de configuración de variables de entorno
 .env
+.vscode/
