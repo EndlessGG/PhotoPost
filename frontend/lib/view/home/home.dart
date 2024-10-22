@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../new_project/new_project.dart';
+import '../project_view/project_view.dart'; // Asegúrate de importar tu archivo de ProjectView
 
 class HomeView extends StatelessWidget {
   @override
@@ -58,8 +59,8 @@ class HomeView extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
-                  _buildProjectCard('Nombre proyecto'),
-                  _buildProjectCard('Nombre proyecto2'),
+                  _buildProjectCard(context, 'Nombre proyecto'),
+                  _buildProjectCard(context, 'Nombre proyecto2'),
                 ],
               ),
             ),
@@ -82,30 +83,42 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildProjectCard(String projectName) {
+  Widget _buildProjectCard(BuildContext context, String projectName) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 100,
-              color: Colors.grey[300],
-              child: Center(
-                child: Icon(Icons.image, size: 50, color: Colors.grey[500]),
+      child: InkWell(
+        // Utilizamos InkWell para agregar la capacidad de hacer clic en la tarjeta
+        onTap: () {
+          // Navegar a la vista del proyecto
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    ProjectView()), // Navegación a ProjectView
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 100,
+                color: Colors.grey[300],
+                child: Center(
+                  child: Icon(Icons.image, size: 50, color: Colors.grey[500]),
+                ),
               ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              projectName,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              SizedBox(height: 10),
+              Text(
+                projectName,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
