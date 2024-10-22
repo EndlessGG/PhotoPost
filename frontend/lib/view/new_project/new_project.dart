@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controller/project_controller.dart'; // Import the controller
 
 class NewProjectView extends StatelessWidget {
+  final TextEditingController _nameController = TextEditingController();
+  String? _imagePath; // This would be set when selecting an image
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,6 +37,7 @@ class NewProjectView extends StatelessWidget {
             ),
             SizedBox(height: 10),
             TextField(
+              controller: _nameController, // Controller for project name
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
               ),
@@ -45,7 +51,9 @@ class NewProjectView extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.folder),
                   onPressed: () {
-                    // Handle image selection
+                    // Handle image selection (for now we will leave it empty)
+                    // In a real scenario, you'd use an image picker here
+                    _imagePath = 'path_to_image'; // Placeholder for image path
                   },
                 ),
               ],
@@ -54,7 +62,13 @@ class NewProjectView extends StatelessWidget {
             // Create button
             ElevatedButton(
               onPressed: () {
-                // Handle create project action
+                final projectName = _nameController.text;
+                if (projectName.isNotEmpty) {
+                  // Access the ProjectController and add the project
+                  Provider.of<ProjectController>(context, listen: false)
+                      .addProject(projectName, _imagePath);
+                  Navigator.pop(context); // Close the bottom sheet
+                }
               },
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
@@ -62,7 +76,7 @@ class NewProjectView extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5),
                   side: BorderSide(color: Colors.black), // Add a border
-                ), // White background for the button
+                ),
               ),
               child: Text(
                 'Crear',
