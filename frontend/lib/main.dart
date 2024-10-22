@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Project Manager',
+      title: 'PhotoPost',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
