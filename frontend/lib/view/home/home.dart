@@ -33,8 +33,44 @@ class HomeView extends StatelessWidget {
               child: Text('Menú',
                   style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
-            ListTile(title: Text('Opción 1'), onTap: () {}),
-            ListTile(title: Text('Opción 2'), onTap: () {}),
+            ListTile(title: Text('Opción 1'), onTap: () {}), // Ejemplo de opción 1
+            ListTile(title: Text('Opción 2'), onTap: () {}), // Ejemplo de opción 2
+            ListTile(
+              title: Text('Aviso de Privacidad'),
+              onTap: () {
+                // Mostrar el aviso de privacidad en un diálogo
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Aviso de Privacidad'),
+                      content: SingleChildScrollView(
+                        child: Text(
+                          '''Fecha de última actualización: 22 de octubre de 2024.
+
+La aplicación PhotoPost respeta su privacidad y está comprometida con la protección de los datos personales que usted nos proporciona.
+
+Los datos personales que recabamos a través de la Aplicación serán utilizados para las siguientes finalidades:
+- Crear y gestionar proyectos en la Aplicación.
+- Registrar y autenticar usuarios para garantizar el acceso adecuado a sus proyectos.
+- Permitir la colaboración y el intercambio de datos, como imágenes, entre los usuarios de un mismo proyecto.
+
+Para más información, consulte el aviso de privacidad completo.''',
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text('Cerrar'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ],
         ),
       ),
