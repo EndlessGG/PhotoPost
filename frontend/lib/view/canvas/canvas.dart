@@ -90,7 +90,9 @@ class _CanvasState extends State<Canvas> {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pop(context);
+            },
           ),
           title: const Text('Título Imagen'),
           actions: [
@@ -130,20 +132,18 @@ class _CanvasState extends State<Canvas> {
                       _zoomin();
                     },
                   ),
-                  // IconButton(
-                  //   icon: const Icon(Icons.zoom_out),
-                  //   onPressed: () {},
-                  // ),
+                  IconButton(
+                    icon: const Icon(Icons.zoom_out),
+                    onPressed: () {
+                       _zoomOut();
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.text_fields),
                     onPressed: () {},
                   ),
                   IconButton(
                     icon: const Icon(Icons.brush),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.note),
                     onPressed: () {},
                   ),
                   IconButton(
