@@ -36,7 +36,6 @@ class _CanvasState extends State<Canvas> {
   // Método para seleccionar una imagen de la galería
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -114,26 +113,37 @@ class _CanvasState extends State<Canvas> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.image),
-                    onPressed: _pickImage,
+
+                    onPressed: () {
+                      _pickImage(); // se invoica al metodo para seleccionar una foto
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.camera),
-                    onPressed: _takePhoto,
+                    onPressed: () {
+                      _takePhoto(); // Se invoca el metodo para volver a tomar la foto
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.zoom_in),
-                    onPressed: _zoomin,
+                    onPressed: () {
+                      _zoomin();
+                    },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.zoom_out),
-                    onPressed: _zoomOut,
-                  ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.zoom_out),
+                  //   onPressed: () {},
+                  // ),
                   IconButton(
                     icon: const Icon(Icons.text_fields),
                     onPressed: () {},
                   ),
                   IconButton(
                     icon: const Icon(Icons.brush),
+                    onPressed: () {},
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.note),
                     onPressed: () {},
                   ),
                   IconButton(
@@ -251,3 +261,4 @@ class Note {
     this.isEditing = false,
   });
 }
+
