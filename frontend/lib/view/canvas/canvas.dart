@@ -113,7 +113,9 @@ class _CanvasState extends State<Canvas> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.image),
-                    onPressed: _pickImage,
+                    onPressed: () {
+                      _pickImage(); // se invoica al metodo para seleccionar una foto
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.camera),
