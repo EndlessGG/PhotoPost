@@ -66,6 +66,8 @@ class GridViewS extends StatelessWidget {
   }
 
 Widget _buildGridItem(BuildContext context, ImageWithNotes imageWithNotes) {
+  print("Image Path for grid item: ${imageWithNotes.imagePath}");
+
     return GestureDetector(
       onTap: () {
         // Navigate to the Canvas view, passing the image and notes
@@ -85,7 +87,6 @@ Widget _buildGridItem(BuildContext context, ImageWithNotes imageWithNotes) {
                 width: double.infinity,
                 color: Colors.grey[300],
                 child: (imageWithNotes.imagePath.isNotEmpty &&
-                        Uri.parse(imageWithNotes.imagePath).isAbsolute &&
                         File(imageWithNotes.imagePath).existsSync())
                     ? Image.file(
                         File(imageWithNotes.imagePath),
@@ -102,7 +103,7 @@ Widget _buildGridItem(BuildContext context, ImageWithNotes imageWithNotes) {
             ),
             SizedBox(height: 10),
             Text(
-              'Notas: ${imageWithNotes.notes.length}', // Shows the number of notes
+              'Notas: ${imageWithNotes.notes.length}',
               style: TextStyle(fontSize: 16),
             ),
           ],
