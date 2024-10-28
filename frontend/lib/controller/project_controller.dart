@@ -1,123 +1,153 @@
 import 'package:flutter/material.dart';
+import '../db/database_helper.dart';
 import '../model/project_model.dart';
 
 class ProjectController extends ChangeNotifier {
+  final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Project> _projects = [];
 
   List<Project> get projects => _projects;
 
-  void addProject(String name, String? imagePath) {
-    final newProject = Project(
+  ProjectController() {
+    _loadProjects();
+  }
+
+  // Método para cargar todos los proyectos desde la base de datos al iniciar
+  Future<void> _loadProjects() async {
+    _projects = await _dbHelper.getProjects();
+    notifyListeners();
+  }
+
+  // CRUD para Project
+
+  Future<void> addProject(String name, String? imagePath) async {
+    final project = Project(
       id: DateTime.now().toString(),
       name: name,
       imagePath: imagePath,
       rooms: [],
     );
-    _projects.add(newProject);
+
+    await _dbHelper.insertProject(project);
+    _projects.add(project);
     notifyListeners();
   }
 
-  void addRoomToProject(String projectId, String roomName) {
-    final project = getProjectById(projectId);
-    if (project != null) {
-      project.rooms.add(Room(name: roomName, images: []));
-      notifyListeners();
-    }
-  }
-
-void addImageToRoom(
-      String projectId, String roomName, String imagePath, List<Note> notes) {
-    final room = getRoomByName(projectId, roomName);
-    if (room != null) {
-      room.images.add(ImageWithNotes(imagePath: imagePath, notes: notes));
-      notifyListeners();
-    }
-  }
-
-
-Project? getProjectById(String projectId) {
-    print("Searching for project with ID: $projectId");
-
-    // Print all available project IDs for reference
-    print("Available projects:");
-    for (var project in _projects) {
-      print("Project ID: ${project.id}, Project Name: ${project.name}");
-    }
-
-    // Attempt to find the project by ID
+  Future<Project?> getProjectById(String projectId) async {
     try {
-      final project = _projects.firstWhere(
-        (proj) => proj.id == projectId,
-        orElse: () {
-          print("Project with ID $projectId not found in the list.");
-          return throw Exception('13'); // Return null instead of throwing an exception
-        },
-      );
-
-      // Print the result if a project is found
-      if (project != null) {
-        print("Found project: ${project.name} with ID: ${project.id}");
-      }
-
-      return project;
+      return _projects.firstWhere((project) => project.id == projectId);
     } catch (e) {
-      // Catch any unexpected errors
-      print("An error occurred while searching for the project: $e");
-      return null; // Return null to handle gracefully
+      return null;
     }
   }
 
-  Room? getRoomByName(String projectId, String roomName) {
-    print(projectId + "aqui2");
-    final project = getProjectById(projectId);
+  // CRUD para Room
+
+  Future<void> addRoomToProject(String projectId, String roomName) async {
+    final project = await getProjectById(projectId);
     if (project != null) {
-      return project.rooms.firstWhere((rm) => rm.name == roomName,
-          orElse: () => throw Exception('12'));
+      final room = Room(name: roomName, images: []);
+      await _dbHelper.insertRoom(projectId, room);
+      project.rooms.add(room);
+      notifyListeners();
+    } else {
+      throw Exception("Project not found");
+    }
+  }
+
+  Future<Room?> getRoomByName(String projectId, String roomName) async {
+    final project = await getProjectById(projectId);
+    if (project != null) {
+      try {
+        return project.rooms.firstWhere((room) => room.name == roomName);
+      } catch (e) {
+        return null;
+      }
     }
     return null;
   }
 
-void updateNotesForImage(String imagePath, List<Note> newNotes) {
+  // Método para eliminar una habitación de un proyecto
+  Future<void> deleteRoom(String projectId, String roomName) async {
+    final project = await getProjectById(projectId);
+    if (project != null) {
+      // Elimina la habitación del proyecto en memoria
+      project.rooms.removeWhere((room) => room.name == roomName);
+      // Elimina la habitación de la base de datos
+      await _dbHelper.deleteRoom(projectId, roomName);
+      notifyListeners();
+    } else {
+      throw Exception("Project not found");
+    }
+  }
+
+  // Método para agregar una imagen vacía a una habitación
+  Future<void> addEmptyImageToRoom(String projectId, String roomName) async {
+    final room = await getRoomByName(projectId, roomName);
+    if (room != null) {
+      final image = ImageWithNotes(imagePath: '', notes: []);
+      // Agrega la imagen vacía en memoria
+      room.images.add(image);
+      // Inserta la imagen vacía en la base de datos
+      await _dbHelper.insertImage(room.name.hashCode, image);
+      notifyListeners();
+    } else {
+      throw Exception("Room not found");
+    }
+  }
+
+  // CRUD para ImageWithNotes
+
+  Future<void> addImageToRoom(String projectId, String roomName, String imagePath, List<Note> notes) async {
+    final room = await getRoomByName(projectId, roomName);
+    if (room != null) {
+      final image = ImageWithNotes(imagePath: imagePath, notes: notes);
+      await _dbHelper.insertImage(room.name.hashCode, image);
+      room.images.add(image);
+      notifyListeners();
+    } else {
+      throw Exception("Room not found");
+    }
+  }
+
+  // CRUD para Note
+
+  Future<void> addNoteToImage(int imageId, Note note) async {
+    await _dbHelper.insertNote(imageId, note);
+    notifyListeners();
+  }
+
+  // Método para actualizar las notas de una imagen específica
+  Future<void> updateNotesForImage(String imagePath, List<Note> newNotes) async {
     for (final project in _projects) {
       for (final room in project.rooms) {
-        final image = room.images.firstWhere(
-            (img) => img.imagePath == imagePath,
-            orElse: () => throw Exception('124'));
-        if (image != null) {
+        try {
+          final image = room.images.firstWhere((img) => img.imagePath == imagePath);
           image.notes = newNotes;
+          for (final note in newNotes) {
+            await _dbHelper.insertNote(imagePath.hashCode, note);
+          }
           notifyListeners();
           return;
+        } catch (e) {
+          // Continuar al siguiente room si no se encuentra la imagen
         }
       }
     }
+    throw Exception("Image not found");
   }
 
-// Method to add an empty image with notes to a specific room
-  void addEmptyImageToRoom(String projectId, String roomName) {
-    print(
-        "Attempting to add an empty image to room '$roomName' in project '$projectId'.");
-
-    // Print out the list of projects to verify if the project exists
-    print("Current projects:");
-    for (var project in _projects) {
-      print("Project ID: ${project.id}, Project Name: ${project.name}");
-    }
-
-    final room = getRoomByName(projectId, roomName);
-
-    // Check if the room was found
-    if (room != null) {
-      print("Room '$roomName' found. Adding an empty image.");
-      room.images.add(ImageWithNotes(imagePath: '', notes: []));
-      notifyListeners(); // Notify listeners after adding the image
-    } else {
-      print("Room '$roomName' not found in project '$projectId'.");
-    }
-  }
-
-void updateImagePath(ImageWithNotes imageWithNotes, String imagePath) {
+  // Método para actualizar la ruta de la imagen en una ImageWithNotes
+  Future<void> updateImagePath(ImageWithNotes imageWithNotes, String imagePath) async {
     imageWithNotes.imagePath = imagePath;
-    notifyListeners(); // Notify listeners to update UI
+    await _dbHelper.insertImage(imageWithNotes.hashCode, imageWithNotes);
+    notifyListeners();
   }
 
+  // Método para borrar todos los datos (para pruebas)
+  Future<void> clearAllData() async {
+    await _dbHelper.clearDatabase();
+    _projects.clear();
+    notifyListeners();
+  }
 }

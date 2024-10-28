@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../canvas/canvas.dart'; // Import the Canvas view
-import '../../controller/project_controller.dart'; // Import the ProjectController
-import '../../model/project_model.dart'; // Import the Room and ImageWithNotes model
+import '../canvas/canvas.dart'; // Importa la vista Canvas
+import '../../controller/project_controller.dart'; // Importa el ProjectController
+import '../../model/project_model.dart'; // Importa Room y ImageWithNotes
 
 class GridViewS extends StatelessWidget {
   final String projectId;
@@ -16,16 +16,27 @@ class GridViewS extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Proyecto "${room.name}"',
-            style: TextStyle(color: Colors.black)),
+        title: Text(
+          'Proyecto "${room.name}"',
+          style: TextStyle(color: Colors.black),
+        ),
         backgroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
-      body: Consumer<ProjectController>(
-        builder: (context, projectController, child) {
-          final updatedRoom =
-              projectController.getRoomByName(projectId, room.name);
+      body: FutureBuilder<Room?>(
+        future: Provider.of<ProjectController>(context, listen: false)
+            .getRoomByName(projectId, room.name),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error al cargar la habitación'));
+          } else if (!snapshot.hasData || snapshot.data == null) {
+            return Center(child: Text('No se encontró la habitación'));
+          }
+
+          final updatedRoom = snapshot.data!;
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -44,9 +55,9 @@ class GridViewS extends StatelessWidget {
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
                     ),
-                    itemCount: updatedRoom?.images.length ?? 0,
+                    itemCount: updatedRoom.images.length,
                     itemBuilder: (context, index) {
-                      final imageWithNotes = updatedRoom!.images[index];
+                      final imageWithNotes = updatedRoom.images[index];
                       return _buildGridItem(context, imageWithNotes);
                     },
                   ),
@@ -65,12 +76,12 @@ class GridViewS extends StatelessWidget {
     );
   }
 
-Widget _buildGridItem(BuildContext context, ImageWithNotes imageWithNotes) {
-  print("Image Path for grid item: ${imageWithNotes.imagePath}");
+  Widget _buildGridItem(BuildContext context, ImageWithNotes imageWithNotes) {
+    print("Ruta de la imagen para el elemento de la cuadrícula: ${imageWithNotes.imagePath}");
 
     return GestureDetector(
       onTap: () {
-        // Navigate to the Canvas view, passing the image and notes
+        // Navegar a la vista Canvas, pasando la imagen y notas
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -112,8 +123,6 @@ Widget _buildGridItem(BuildContext context, ImageWithNotes imageWithNotes) {
     );
   }
 
-
-  // Method to add an empty ImageWithNotes to the room
   void _addEmptyImageWithNotes(BuildContext context) {
     Provider.of<ProjectController>(context, listen: false)
         .addEmptyImageToRoom(projectId, room.name);
