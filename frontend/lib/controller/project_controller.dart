@@ -25,14 +25,15 @@ class ProjectController extends ChangeNotifier {
     }
   }
 
-  void addImageToRoom(
-      String projectId, String roomName, String imagePath, List<String> notes) {
+void addImageToRoom(
+      String projectId, String roomName, String imagePath, List<Note> notes) {
     final room = getRoomByName(projectId, roomName);
     if (room != null) {
       room.images.add(ImageWithNotes(imagePath: imagePath, notes: notes));
       notifyListeners();
     }
   }
+
 
 Project? getProjectById(String projectId) {
     print("Searching for project with ID: $projectId");
@@ -76,12 +77,12 @@ Project? getProjectById(String projectId) {
     return null;
   }
 
-  void updateNotesForImage(String imagePath, List<String> newNotes) {
+void updateNotesForImage(String imagePath, List<Note> newNotes) {
     for (final project in _projects) {
       for (final room in project.rooms) {
         final image = room.images.firstWhere(
             (img) => img.imagePath == imagePath,
-            orElse: () => throw Exception('1'));
+            orElse: () => throw Exception('124'));
         if (image != null) {
           image.notes = newNotes;
           notifyListeners();

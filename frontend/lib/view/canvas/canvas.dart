@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../model/project_model.dart'; // Importa el modelo
+import '../../model/project_model.dart';
 import 'package:provider/provider.dart';
-import '../../controller/project_controller.dart'; // Importa el controlador
+import '../../controller/project_controller.dart';
 
 class Canvas extends StatefulWidget {
   final ImageWithNotes imageWithNotes;
@@ -21,16 +21,13 @@ class _CanvasState extends State<Canvas> {
   double _currentScale = 1.0;
   final double _minScale = 0.5;
   final double _maxScale = 5.0;
-
-  List<Note> notes = [];
   final TextEditingController _textController = TextEditingController();
 
-@override
+  @override
   void initState() {
     super.initState();
-    notes = widget.imageWithNotes.notes
-        .map((text) => Note(text: text, position: Offset.zero))
-        .toList();
+    // Directly use the notes from imageWithNotes
+    widget.imageWithNotes.notes = widget.imageWithNotes.notes;
 
     // Load existing image if imagePath is set
     if (widget.imageWithNotes.imagePath.isNotEmpty) {
@@ -38,20 +35,17 @@ class _CanvasState extends State<Canvas> {
     }
   }
 
-
-Future<void> _takePhoto() async {
+  Future<void> _takePhoto() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.camera);
-
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
-        notes.clear();
-        widget.imageWithNotes.imagePath = pickedFile.path; // Save image path
+        widget.imageWithNotes.notes
+            .clear(); // Clear existing notes when taking a new photo
+        widget.imageWithNotes.imagePath = pickedFile.path;
       });
-
-      // Update the image path in the ProjectController
       Provider.of<ProjectController>(context, listen: false).updateImagePath(
         widget.imageWithNotes,
         pickedFile.path,
@@ -65,11 +59,9 @@ Future<void> _takePhoto() async {
       setState(() {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
-        notes.clear();
-        widget.imageWithNotes.imagePath = pickedFile.path; // Save image path
+        widget.imageWithNotes.notes.clear();
+        widget.imageWithNotes.imagePath = pickedFile.path;
       });
-
-      // Update the image path in the ProjectController
       Provider.of<ProjectController>(context, listen: false).updateImagePath(
         widget.imageWithNotes,
         pickedFile.path,
@@ -77,10 +69,9 @@ Future<void> _takePhoto() async {
     }
   }
 
-
   void _onDoubleTap(TapDownDetails details) {
     setState(() {
-      notes.add(
+      widget.imageWithNotes.notes.add(
         Note(
           text: '',
           position: details.localPosition,
@@ -88,6 +79,15 @@ Future<void> _takePhoto() async {
         ),
       );
     });
+  }
+
+  void _saveNotes() {
+    final projectController =
+        Provider.of<ProjectController>(context, listen: false);
+    projectController.updateNotesForImage(
+      widget.imageWithNotes.imagePath,
+      widget.imageWithNotes.notes,
+    );
   }
 
   void _zoomin() {
@@ -111,15 +111,6 @@ Future<void> _takePhoto() async {
       }
     });
   }
-
-void _saveNotes() {
-    final projectController =
-        Provider.of<ProjectController>(context, listen: false);
-    final updatedNotes = notes.map((note) => note.text).toList();
-    projectController.updateNotesForImage(
-        widget.imageWithNotes.imagePath, updatedNotes);
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -218,23 +209,25 @@ void _saveNotes() {
                               ),
                             ),
                           ),
-                    for (int i = 0; i < notes.length; i++)
+                    for (int i = 0; i < widget.imageWithNotes.notes.length; i++)
                       Positioned(
-                        left: notes[i].position.dx,
-                        top: notes[i].position.dy,
+                        left: widget.imageWithNotes.notes[i].position.dx,
+                        top: widget.imageWithNotes.notes[i].position.dy,
                         child: GestureDetector(
                           onPanUpdate: (details) {
                             setState(() {
-                              notes[i].position = Offset(
-                                notes[i].position.dx + details.delta.dx,
-                                notes[i].position.dy + details.delta.dy,
+                              widget.imageWithNotes.notes[i].position = Offset(
+                                widget.imageWithNotes.notes[i].position.dx +
+                                    details.delta.dx,
+                                widget.imageWithNotes.notes[i].position.dy +
+                                    details.delta.dy,
                               );
                             });
                           },
                           child: Container(
                             color: Colors.white.withOpacity(0.8),
                             padding: const EdgeInsets.all(4.0),
-                            child: notes[i].isEditing
+                            child: widget.imageWithNotes.notes[i].isEditing
                                 ? SizedBox(
                                     width: 200,
                                     child: TextField(
@@ -242,8 +235,10 @@ void _saveNotes() {
                                       autofocus: true,
                                       onSubmitted: (value) {
                                         setState(() {
-                                          notes[i].text = value;
-                                          notes[i].isEditing = false;
+                                          widget.imageWithNotes.notes[i].text =
+                                              value;
+                                          widget.imageWithNotes.notes[i]
+                                              .isEditing = false;
                                           _textController.clear();
                                         });
                                       },
@@ -252,11 +247,12 @@ void _saveNotes() {
                                 : GestureDetector(
                                     onTap: () {
                                       setState(() {
-                                        notes[i].isEditing = true;
+                                        widget.imageWithNotes.notes[i]
+                                            .isEditing = true;
                                       });
                                     },
                                     child: Text(
-                                      notes[i].text,
+                                      widget.imageWithNotes.notes[i].text,
                                       style: const TextStyle(
                                         fontSize: 16,
                                         color: Colors.black,
@@ -275,16 +271,4 @@ void _saveNotes() {
       ),
     );
   }
-}
-
-class Note {
-  String text;
-  Offset position;
-  bool isEditing;
-
-  Note({
-    required this.text,
-    required this.position,
-    this.isEditing = false,
-  });
 }
