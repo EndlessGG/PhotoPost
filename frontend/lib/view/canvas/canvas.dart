@@ -25,15 +25,21 @@ class _CanvasState extends State<Canvas> {
   List<Note> notes = [];
   final TextEditingController _textController = TextEditingController();
 
-  @override
+@override
   void initState() {
     super.initState();
     notes = widget.imageWithNotes.notes
         .map((text) => Note(text: text, position: Offset.zero))
         .toList();
+
+    // Load existing image if imagePath is set
+    if (widget.imageWithNotes.imagePath.isNotEmpty) {
+      _image = File(widget.imageWithNotes.imagePath);
+    }
   }
 
-  Future<void> _takePhoto() async {
+
+Future<void> _takePhoto() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.camera);
 
@@ -42,7 +48,14 @@ class _CanvasState extends State<Canvas> {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
         notes.clear();
+        widget.imageWithNotes.imagePath = pickedFile.path; // Save image path
       });
+
+      // Update the image path in the ProjectController
+      Provider.of<ProjectController>(context, listen: false).updateImagePath(
+        widget.imageWithNotes,
+        pickedFile.path,
+      );
     }
   }
 
@@ -53,9 +66,17 @@ class _CanvasState extends State<Canvas> {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
         notes.clear();
+        widget.imageWithNotes.imagePath = pickedFile.path; // Save image path
       });
+
+      // Update the image path in the ProjectController
+      Provider.of<ProjectController>(context, listen: false).updateImagePath(
+        widget.imageWithNotes,
+        pickedFile.path,
+      );
     }
   }
+
 
   void _onDoubleTap(TapDownDetails details) {
     setState(() {

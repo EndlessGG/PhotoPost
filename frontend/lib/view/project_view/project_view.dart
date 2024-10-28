@@ -116,7 +116,9 @@ class ProjectView extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  GridViewS(room: room), // Pass room to GridView
+                  GridViewS(
+                    projectId: projectId,
+                    room: room), // Pass room to GridView
             ),
           );
         },
