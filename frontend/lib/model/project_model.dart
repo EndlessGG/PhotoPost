@@ -2,14 +2,32 @@ class Project {
   final String id;
   final String name;
   final String? imagePath;
-  List<String> rooms; // Make this a regular, modifiable list
+  List<Room> rooms;
 
-  // Modify the constructor to initialize 'rooms' as a regular list, not a constant
-  Project(
-      {required this.id,
-      required this.name,
-      this.imagePath,
-      List<String>? rooms})
-      : rooms =
-            rooms ?? []; // Default to an empty list if 'rooms' is not provided
+  Project({
+    required this.id,
+    required this.name,
+    this.imagePath,
+    List<Room>? rooms,
+  }) : rooms = rooms ?? [];
+}
+
+class Room {
+  final String name;
+  List<ImageWithNotes> images;
+
+  Room({
+    required this.name,
+    List<ImageWithNotes>? images,
+  }) : images = images ?? [];
+}
+
+class ImageWithNotes {
+  String imagePath;
+  List<String> notes;
+
+  ImageWithNotes({
+    required this.imagePath,
+    List<String>? notes,
+  }) : notes = notes ?? [];
 }

@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
-import '../canvas/canvas.dart'; // Importar la vista de Canvas
+import 'package:provider/provider.dart';
+import '../canvas/canvas.dart'; // Import the Canvas view
+import '../../controller/project_controller.dart'; // Import the ProjectController
+import '../../model/project_model.dart'; // Import the Room and ImageWithNotes model
 
 class GridViewS extends StatelessWidget {
+  final Room room;
+
+  GridViewS({required this.room});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Proyecto "Techo"', style: TextStyle(color: Colors.black)),
+        title: Text('Proyecto "${room.name}"',
+            style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         centerTitle: true,
-        elevation: 0, // Sin sombra
+        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -17,23 +25,22 @@ class GridViewS extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              'Proyecto "Techo"',
+              'Habitación "${room.name}"',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 2, // Número de columnas en la cuadrícula
-                crossAxisSpacing: 10, // Espacio entre columnas
-                mainAxisSpacing: 10, // Espacio entre filas
-                children: [
-                  _buildGridItem(context, 'Imagen1'),
-                  _buildGridItem(context, 'Imagen2'),
-                  _buildGridItem(context, 'Nombre'),
-                  _buildGridItem(context, 'Nombre'),
-                  _buildGridItem(context, 'Nombre'),
-                  _buildGridItem(context, 'Nombre'),
-                ],
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: room.images.length,
+                itemBuilder: (context, index) {
+                  final imageWithNotes = room.images[index];
+                  return _buildGridItem(context, imageWithNotes);
+                },
               ),
             ),
           ],
@@ -41,43 +48,68 @@ class GridViewS extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Aquí puedes manejar la acción para tomar una nueva foto
+          _addEmptyImageWithNotes(context);
         },
-        child: Icon(Icons.camera_alt),
+        child: Icon(Icons.add),
       ),
     );
   }
 
-  // Método para construir cada elemento de la cuadrícula
-  Widget _buildGridItem(BuildContext context, String title) {
+  // Method to build each grid item
+  Widget _buildGridItem(BuildContext context, ImageWithNotes imageWithNotes) {
     return GestureDetector(
       onTap: () {
-        // Navegar a la vista de Canvas al hacer clic en el item
+        // Navigate to the Canvas view, passing the image and notes
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => Canvas()), // Navegar a Canvas
+          MaterialPageRoute(
+            builder: (context) =>
+                Canvas(imageWithNotes: imageWithNotes), // Pass image to Canvas
+          ),
         );
       },
       child: Card(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Imagen ajustada para llenar completamente el contenedor
             Expanded(
               child: Container(
-                width: double.infinity, // Para que la imagen llene el ancho
-                child: Image.asset(
-                  'assets/placeholder_image.png', // Reemplaza con la ruta de tu imagen
-                  fit: BoxFit
-                      .cover, // Ajuste para que la imagen llene el contenedor
-                ),
+                width: double.infinity,
+                color: Colors
+                    .grey[300], // Placeholder background color for empty images
+                child: imageWithNotes.imagePath.isNotEmpty
+                    ? Image.network(
+                        imageWithNotes.imagePath,
+                        fit: BoxFit.cover,
+                      )
+                    : Center(
+                        child: Icon(Icons.image,
+                            size: 50, color: Colors.grey[500]),
+                      ),
               ),
             ),
             SizedBox(height: 10),
-            Text(title, style: TextStyle(fontSize: 16)),
+            Text(
+              'Notas: ${imageWithNotes.notes.length}', // Shows the number of notes
+              style: TextStyle(fontSize: 16),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  // Method to add an empty ImageWithNotes to the room
+  void _addEmptyImageWithNotes(BuildContext context) {
+    // Create a new ImageWithNotes with no image path or notes initially
+    final newImageWithNotes = ImageWithNotes(imagePath: '', notes: []);
+
+    // Add the new ImageWithNotes to the room and update the state
+    Provider.of<ProjectController>(context, listen: false)
+        .getRoomByName(room.name, room.name)
+        ?.images
+        .add(newImageWithNotes);
+
+    Provider.of<ProjectController>(context, listen: false).notifyListeners();
   }
 }
