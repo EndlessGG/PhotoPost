@@ -1,6 +1,0 @@
-{
-    "avdmanager.sdkManager": "sdkmanager",
-    "avdmanager.sdkPath": "c:\\Users\\Juan Mena\\AppData\\Local\\Android\\Sdk",
-    "avdmanager.avdHome": "C:\\Users\\Juan Mena\\AppData\\Local\\Android\\Sdk",
-    "avdmanager.executable": "c:\\Users\\Juan Mena\\AppData\\Local\\Android\\Sdk\\cmdline-tools\\latest\\bin\\avdmanager.bat"
-}
