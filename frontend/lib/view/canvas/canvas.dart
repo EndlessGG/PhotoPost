@@ -26,24 +26,20 @@ class _CanvasState extends State<Canvas> {
   @override
   void initState() {
     super.initState();
-    // Directly use the notes from imageWithNotes
     widget.imageWithNotes.notes = widget.imageWithNotes.notes;
 
-    // Load existing image if imagePath is set
     if (widget.imageWithNotes.imagePath.isNotEmpty) {
       _image = File(widget.imageWithNotes.imagePath);
     }
   }
 
   Future<void> _takePhoto() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.camera);
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
-        widget.imageWithNotes.notes
-            .clear(); // Clear existing notes when taking a new photo
+        widget.imageWithNotes.notes.clear();
         widget.imageWithNotes.imagePath = pickedFile.path;
       });
       Provider.of<ProjectController>(context, listen: false).updateImagePath(
@@ -82,8 +78,7 @@ class _CanvasState extends State<Canvas> {
   }
 
   void _saveNotes() {
-    final projectController =
-        Provider.of<ProjectController>(context, listen: false);
+    final projectController = Provider.of<ProjectController>(context, listen: false);
     projectController.updateNotesForImage(
       widget.imageWithNotes.imagePath,
       widget.imageWithNotes.notes,
@@ -167,8 +162,7 @@ class _CanvasState extends State<Canvas> {
                   onPressed: () {},
                 ),
                 IconButton(
-                  icon: Icon(
-                      _isVisible ? Icons.visibility : Icons.visibility_off),
+                  icon: Icon(_isVisible ? Icons.visibility : Icons.visibility_off),
                   onPressed: () {
                     setState(() {
                       _isVisible = !_isVisible;
@@ -209,59 +203,55 @@ class _CanvasState extends State<Canvas> {
                               ),
                             ),
                           ),
-                    for (int i = 0; i < widget.imageWithNotes.notes.length; i++)
-                      Positioned(
-                        left: widget.imageWithNotes.notes[i].position.dx,
-                        top: widget.imageWithNotes.notes[i].position.dy,
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
-                            setState(() {
-                              widget.imageWithNotes.notes[i].position = Offset(
-                                widget.imageWithNotes.notes[i].position.dx +
-                                    details.delta.dx,
-                                widget.imageWithNotes.notes[i].position.dy +
-                                    details.delta.dy,
-                              );
-                            });
-                          },
-                          child: Container(
-                            color: Colors.white.withOpacity(0.8),
-                            padding: const EdgeInsets.all(4.0),
-                            child: widget.imageWithNotes.notes[i].isEditing
-                                ? SizedBox(
-                                    width: 200,
-                                    child: TextField(
-                                      controller: _textController,
-                                      autofocus: true,
-                                      onSubmitted: (value) {
+                    if (_isVisible)
+                      for (int i = 0; i < widget.imageWithNotes.notes.length; i++)
+                        Positioned(
+                          left: widget.imageWithNotes.notes[i].position.dx,
+                          top: widget.imageWithNotes.notes[i].position.dy,
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              setState(() {
+                                widget.imageWithNotes.notes[i].position = Offset(
+                                  widget.imageWithNotes.notes[i].position.dx + details.delta.dx,
+                                  widget.imageWithNotes.notes[i].position.dy + details.delta.dy,
+                                );
+                              });
+                            },
+                            child: Container(
+                              color: Colors.white.withOpacity(0.8),
+                              padding: const EdgeInsets.all(4.0),
+                              child: widget.imageWithNotes.notes[i].isEditing
+                                  ? SizedBox(
+                                      width: 200,
+                                      child: TextField(
+                                        controller: _textController,
+                                        autofocus: true,
+                                        onSubmitted: (value) {
+                                          setState(() {
+                                            widget.imageWithNotes.notes[i].text = value;
+                                            widget.imageWithNotes.notes[i].isEditing = false;
+                                            _textController.clear();
+                                          });
+                                        },
+                                      ),
+                                    )
+                                  : GestureDetector(
+                                      onTap: () {
                                         setState(() {
-                                          widget.imageWithNotes.notes[i].text =
-                                              value;
-                                          widget.imageWithNotes.notes[i]
-                                              .isEditing = false;
-                                          _textController.clear();
+                                          widget.imageWithNotes.notes[i].isEditing = true;
                                         });
                                       },
-                                    ),
-                                  )
-                                : GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        widget.imageWithNotes.notes[i]
-                                            .isEditing = true;
-                                      });
-                                    },
-                                    child: Text(
-                                      widget.imageWithNotes.notes[i].text,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.black,
+                                      child: Text(
+                                        widget.imageWithNotes.notes[i].text,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black,
+                                        ),
                                       ),
                                     ),
-                                  ),
+                            ),
                           ),
                         ),
-                      ),
                   ],
                 ),
               ),
