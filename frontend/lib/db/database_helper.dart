@@ -44,7 +44,8 @@ class DatabaseHelper {
       CREATE TABLE projects (
         id TEXT PRIMARY KEY,
         name TEXT,
-        imagePath TEXT
+        imagePath TEXT,
+        creationDate TEXT 
       )
     ''');
 
@@ -82,16 +83,21 @@ class DatabaseHelper {
 
   Future<void> insertProject(Project project) async {
     final db = await database;
+    print("Insertando proyecto con ID: ${project.id}, Nombre: ${project.name}, Fecha de creación: ${project.creationDate}");
+    
     await db.insert(
       'projects',
       {
         'id': project.id,
         'name': project.name,
         'imagePath': project.imagePath,
+        'creationDate': project.creationDate.toIso8601String(), // Asegúrate de guardar la fecha en ISO8601
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    print("Proyecto insertado en la base de datos");
   }
+
 
   Future<List<Project>> getProjects() async {
     final db = await database;
@@ -102,6 +108,7 @@ class DatabaseHelper {
       projects.add(Project(
         id: map['id'] as String,
         name: map['name'] as String,
+        creationDate: DateTime.parse(map['creationDate'] as String),
         imagePath: map['imagePath'] as String?,
         rooms: rooms,
       ));
