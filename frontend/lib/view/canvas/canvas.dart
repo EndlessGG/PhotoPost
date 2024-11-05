@@ -1,9 +1,15 @@
 import 'dart:io';
+import 'dart:ui' as ui; // Necesario para crear una imagen con trazos
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../model/project_model.dart';
+import 'package:provider/provider.dart';
+import '../../controller/project_controller.dart';
 
 class Canvas extends StatefulWidget {
-  const Canvas({super.key});
+  final ImageWithNotes imageWithNotes;
+
+  const Canvas({super.key, required this.imageWithNotes});
 
   @override
   _CanvasState createState() => _CanvasState();
@@ -11,249 +17,238 @@ class Canvas extends StatefulWidget {
 
 class _CanvasState extends State<Canvas> {
   bool _isVisible = true;
+  bool _isDrawing = false; // Para activar/desactivar el modo de dibujo
   File? _image;
   final ImagePicker _picker = ImagePicker();
   double _currentScale = 1.0;
   final double _minScale = 0.5;
   final double _maxScale = 5.0;
-
-  List<Note> notes = []; // Lista de notas
   final TextEditingController _textController = TextEditingController();
+  
+  List<Offset> _points = []; // Almacena los puntos del trazo
 
-  // Método para tomar una foto
+  @override
+  void initState() {
+    super.initState();
+    // Cargar imagen existente si imagePath está configurado
+    if (widget.imageWithNotes.imagePath.isNotEmpty) {
+      _image = File(widget.imageWithNotes.imagePath);
+    }
+  }
+
   Future<void> _takePhoto() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
-
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
-        notes.clear(); // Limpiar notas al cambiar de imagen
+        widget.imageWithNotes.notes.clear();
+        widget.imageWithNotes.imagePath = pickedFile.path;
       });
+      Provider.of<ProjectController>(context, listen: false).updateImagePath(
+        widget.imageWithNotes,
+        pickedFile.path,
+      );
     }
   }
 
-  // Método para seleccionar una imagen de la galería
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
-        notes.clear(); // Limpiar notas al cambiar de imagen
+        widget.imageWithNotes.notes.clear();
+        widget.imageWithNotes.imagePath = pickedFile.path;
       });
+      Provider.of<ProjectController>(context, listen: false).updateImagePath(
+        widget.imageWithNotes,
+        pickedFile.path,
+      );
     }
   }
 
-  // Método para agregar una nota
-  void _onDoubleTap(TapDownDetails details) {
-    setState(() {
-      notes.add(
-        Note(
-          text: '',
-          position: details.localPosition,
-          isEditing: true, // Hacer que la nota sea editable inicialmente
-        ),
-      );
-    });
-  }
+  // Función para guardar la imagen con los trazos en almacenamiento interno
+  Future<void> _saveImageWithDrawings() async {
+    if (_image == null) return;
 
-  // Método para aumentar el zoom
-  void _zoomin() {
-    setState(() {
-      if (_currentScale < _maxScale) {
-        _currentScale *= 1.2;
-        if (_currentScale > _maxScale) {
-          _currentScale = _maxScale;
-        }
+    // Crear un lienzo con las dimensiones de la imagen original
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+    final image = await _image!.readAsBytes();
+    final ui.Image uiImage = await decodeImageFromList(image);
+
+    // Dibujar la imagen original en el lienzo
+    canvas.drawImage(uiImage, Offset.zero, Paint());
+
+    // Dibujar los trazos almacenados sobre el lienzo
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+    
+    for (int i = 0; i < _points.length - 1; i++) {
+      if (_points[i] != null && _points[i + 1] != null) {
+        canvas.drawLine(_points[i], _points[i + 1], paint);
       }
+    }
+
+    // Convertir el lienzo en una imagen
+    final ui.Image finalImage = await recorder.endRecording().toImage(
+      uiImage.width,
+      uiImage.height,
+    );
+
+    // Convertir la imagen a bytes PNG
+    final ByteData? byteData = await finalImage.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    // Guardar la imagen modificada en almacenamiento interno
+    final String path = widget.imageWithNotes.imagePath;
+    final File newImageFile = await File(path).writeAsBytes(pngBytes);
+
+    // Actualizar la imagen en la interfaz
+    setState(() {
+      _image = newImageFile;
     });
   }
 
-  // Método para reducir el zoom
-  void _zoomOut() {
+  // Método que activa/desactiva el modo de dibujo
+  void _toggleDrawingMode() {
     setState(() {
-      if (_currentScale > _minScale) {
-        _currentScale /= 1.2;
-        if (_currentScale < _minScale) {
-          _currentScale = _minScale;
-        }
+      _isDrawing = !_isDrawing;
+      if (!_isDrawing) {
+        _points.clear(); // Limpia los puntos cuando se desactiva el modo de dibujo
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          title: const Text('Título Imagen'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _saveImageWithDrawings(); // Guarda la imagen con los trazos al volver atrás
+            Navigator.pop(context);
+          },
         ),
-        body: Column(
-          children: [
-            Container(
-              color: Colors.grey[200],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+        title: const Text('Título Imagen'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Container(
+            color: Colors.grey[200],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.bookmark),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.image),
+                  onPressed: _pickImage,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera),
+                  onPressed: _takePhoto,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.zoom_in),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.zoom_out),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.text_fields),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.brush),
+                  onPressed: _toggleDrawingMode, // Activa/desactiva el modo de dibujo
+                ),
+                IconButton(
+                  icon: Icon(_isVisible ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () {
+                    setState(() {
+                      _isVisible = !_isVisible;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                // Agregar puntos a la lista mientras se dibuja
+                if (_isDrawing) {
+                  setState(() {
+                    _points.add(details.localPosition);
+                  });
+                }
+              },
+              onPanEnd: (details) {
+                // Agregar un marcador null para indicar un nuevo trazo
+                _points.add(Offset.infinite);
+              },
+              child: Stack(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.bookmark),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.image),
-                    onPressed: () {
-                      _pickImage(); // se invoica al metodo para seleccionar una foto
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.camera),
-                    onPressed: _takePhoto,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.zoom_in),
-                    onPressed: _zoomin,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.zoom_out),
-                    onPressed: () {
-                       _zoomOut();
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.text_fields),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.brush),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _isVisible ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isVisible = !_isVisible;
-                      });
-                    },
+                  _image == null
+                      ? const Center(child: Text('Toma/Selecciona una Foto'))
+                      : InteractiveViewer(
+                          minScale: _minScale,
+                          maxScale: _maxScale,
+                          child: Image.file(
+                            _image!,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                  // Dibuja los trazos sobre la imagen
+                  CustomPaint(
+                    size: Size.infinite,
+                    painter: _DrawingPainter(_points),
                   ),
                 ],
               ),
             ),
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.all(10.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
-                ),
-                child: GestureDetector(
-                  onDoubleTapDown: _onDoubleTap, // Doble clic para agregar nota
-                  child: Stack(
-                    children: [
-                      _image == null
-                          ? const Center(
-                              child: Text('Toma/Selecciona una Foto',
-                                  style: TextStyle(fontSize: 16)),
-                            )
-                          : InteractiveViewer(
-                              boundaryMargin: const EdgeInsets.all(10.0),
-                              minScale: _minScale,
-                              maxScale: _maxScale,
-                              child: Transform.scale(
-                                scale: _currentScale,
-                                child: Image.file(
-                                  _image!,
-                                  fit: BoxFit.contain,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                ),
-                              ),
-                            ),
-                      // Mostrar las notas encima de la imagen
-                      for (int i = 0; i < notes.length; i++)
-                        Positioned(
-                          left: notes[i].position.dx,
-                          top: notes[i].position.dy,
-                          child: GestureDetector(
-                            onPanUpdate: (details) {
-                              setState(() {
-                                notes[i].position = Offset(
-                                  notes[i].position.dx + details.delta.dx,
-                                  notes[i].position.dy + details.delta.dy,
-                                );
-                              });
-                            },
-                            child: Container(
-                              color: Colors.white.withOpacity(0.8),
-                              padding: const EdgeInsets.all(4.0),
-                              child: notes[i].isEditing
-                                  ? SizedBox(
-                                      width: 200,
-                                      child: TextField(
-                                        controller: _textController,
-                                        autofocus: true,
-                                        onSubmitted: (value) {
-                                          setState(() {
-                                            notes[i].text = value;
-                                            notes[i].isEditing = false;
-                                            _textController.clear(); // Limpiar el controlador
-                                          });
-                                        },
-                                      ),
-                                    )
-                                  : GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          notes[i].isEditing = true; // Permitir editar al tocar
-                                        });
-                                      },
-                                      child: Text(
-                                        notes[i].text,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// Clase para representar cada nota
-class Note {
-  String text;
-  Offset position;
-  bool isEditing;
+// Clase CustomPainter para dibujar los trazos en la pantalla
+class _DrawingPainter extends CustomPainter {
+  final List<Offset> points;
+  
+  _DrawingPainter(this.points);
 
-  Note({
-    required this.text,
-    required this.position,
-    this.isEditing = false,
-  });
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i < points.length - 1; i++) {
+      if (points[i] != Offset.infinite && points[i + 1] != Offset.infinite) {
+        canvas.drawLine(points[i], points[i + 1], paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DrawingPainter oldDelegate) => oldDelegate.points != points;
 }
-
