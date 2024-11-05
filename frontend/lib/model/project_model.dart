@@ -4,12 +4,14 @@ class Project {
   final String id;
   final String name;
   final String? imagePath;
+  final DateTime creationDate; 
   List<Room> rooms;
 
   Project({
     required this.id,
     required this.name,
     this.imagePath,
+    required this.creationDate,
     List<Room>? rooms,
   }) : rooms = rooms ?? [];
 }

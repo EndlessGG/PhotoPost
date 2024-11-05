@@ -15,23 +15,32 @@ class ProjectController extends ChangeNotifier {
   // Método para cargar todos los proyectos desde la base de datos al iniciar
   Future<void> _loadProjects() async {
     _projects = await _dbHelper.getProjects();
+    print("Proyectos cargados: ${_projects.length}");
     notifyListeners();
   }
+
 
   // CRUD para Project
 
   Future<void> addProject(String name, String? imagePath) async {
-    final project = Project(
-      id: DateTime.now().toString(),
-      name: name,
-      imagePath: imagePath,
-      rooms: [],
-    );
+    try {
+      final project = Project(
+        id: DateTime.now().toString(),
+        name: name,
+        imagePath: imagePath,
+        creationDate: DateTime.now(),
+        rooms: [],
+      );
 
-    await _dbHelper.insertProject(project);
-    _projects.add(project);
-    notifyListeners();
+      await _dbHelper.insertProject(project);
+      _projects.add(project);
+      notifyListeners();
+      print("Proyecto añadido exitosamente");
+    } catch (e) {
+      print("Error al añadir el proyecto: $e");
+    }
   }
+
 
   Future<Project?> getProjectById(String projectId) async {
     try {
