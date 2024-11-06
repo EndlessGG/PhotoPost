@@ -228,7 +228,7 @@ class _CanvasState extends State<Canvas> {
                         top: _tempIconPosition!.dy,
                         child: Icon(
                           Icons.check_circle,
-                          color: Colors.blue,
+                          color: Colors.blue, //color azul el icono*
                           size: 30,
                         ),
                       ),
