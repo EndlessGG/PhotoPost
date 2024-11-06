@@ -108,62 +108,70 @@ Para más información, consulte el aviso de privacidad completo.''',
     );
   }
 
-Widget _buildProjectCard(BuildContext context, Project project) {
-  return Card(
-    margin: EdgeInsets.symmetric(vertical: 10),
-    child: InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProjectView(projectId: project.id),
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            project.imagePath != null
-                ? Image.network(
-                    project.imagePath!,
-                    height: 100,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    height: 100,
-                    color: Colors.grey[300],
-                    child: Center(
-                      child: Icon(Icons.image,
-                          size: 50, color: Colors.grey[500]),
+  Widget _buildProjectCard(BuildContext context, Project project) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 10),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProjectView(projectId: project.id),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              project.imagePath != null
+                  ? Image.network(
+                      project.imagePath!,
+                      height: 100,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      height: 100,
+                      color: Colors.grey[300],
+                      child: Center(
+                        child: Icon(Icons.image,
+                            size: 50, color: Colors.grey[500]),
+                      ),
                     ),
-                  ),
-            SizedBox(height: 10),
-            Text(
-              project.name,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'Creado el: ${project.creationDate.toLocal().toIso8601String().split('T')[0]}', // Asegúrate de mostrar la fecha correctamente
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            Text(
+              SizedBox(height: 10),
+              Text(
+                project.name,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Creado el: ${project.creationDate.toLocal().toIso8601String().split('T')[0]}',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              Text(
               'Habitaciones: ${project.rooms.length}',
               style: TextStyle(color: Colors.grey[600]),
             ),
-            Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  final controller =
-                      Provider.of<ProjectController>(context, listen: false);
-                  controller.projects.removeWhere((p) => p.id == project.id);
-                  controller.notifyListeners();
-                },
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.share, color: Colors.blue),
+                  onPressed: () {
+                    // Acción para compartir el proyecto
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    final controller =
+                        Provider.of<ProjectController>(context, listen: false);
+                    controller.projects.removeWhere((p) => p.id == project.id);
+                    controller.notifyListeners();
+                  },
+                ),
+              ],
             ),
           ],
         ),
