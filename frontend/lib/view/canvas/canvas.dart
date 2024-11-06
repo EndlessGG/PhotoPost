@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../model/project_model.dart';
@@ -22,6 +23,10 @@ class _CanvasState extends State<Canvas> {
   final double _minScale = 0.5;
   final double _maxScale = 5.0;
   final TextEditingController _textController = TextEditingController();
+
+  // Variables para el ícono temporal
+  Offset? _tempIconPosition;
+  bool _showTempIcon = false;
 
   @override
   void initState() {
@@ -104,6 +109,20 @@ class _CanvasState extends State<Canvas> {
           _currentScale = _minScale;
         }
       }
+    });
+  }
+
+  void _showConfirmationIcon(Offset position) {
+    setState(() {
+      _tempIconPosition = position;
+      _showTempIcon = true;
+    });
+
+    // Oculta el ícono después de 1 segundo
+    Timer(const Duration(seconds: 1), () {
+      setState(() {
+        _showTempIcon = false;
+      });
     });
   }
 
@@ -203,6 +222,16 @@ class _CanvasState extends State<Canvas> {
                               ),
                             ),
                           ),
+                    if (_showTempIcon && _tempIconPosition != null)
+                      Positioned(
+                        left: _tempIconPosition!.dx,
+                        top: _tempIconPosition!.dy,
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Colors.blue, //color azul el icono*
+                          size: 30,
+                        ),
+                      ),
                     if (_isVisible)
                       for (int i = 0; i < widget.imageWithNotes.notes.length; i++)
                         Positioned(
@@ -217,39 +246,37 @@ class _CanvasState extends State<Canvas> {
                                 );
                               });
                             },
-                            child: Container(
-                              color: Colors.white.withOpacity(0.8),
-                              padding: const EdgeInsets.all(4.0),
-                              child: widget.imageWithNotes.notes[i].isEditing
-                                  ? SizedBox(
-                                      width: 200,
-                                      child: TextField(
-                                        controller: _textController,
-                                        autofocus: true,
-                                        onSubmitted: (value) {
-                                          setState(() {
-                                            widget.imageWithNotes.notes[i].text = value;
-                                            widget.imageWithNotes.notes[i].isEditing = false;
-                                            _textController.clear();
-                                          });
-                                        },
-                                      ),
-                                    )
-                                  : GestureDetector(
-                                      onTap: () {
+                            child: widget.imageWithNotes.notes[i].isEditing
+                                ? SizedBox(
+                                    width: 200,
+                                    child: TextField(
+                                      controller: _textController,
+                                      autofocus: true,
+                                      onSubmitted: (value) {
                                         setState(() {
-                                          widget.imageWithNotes.notes[i].isEditing = true;
+                                          widget.imageWithNotes.notes[i].text = value;
+                                          widget.imageWithNotes.notes[i].isEditing = false;
+                                          _textController.clear();
+                                          // Muestra el ícono de confirmación después de guardar la nota
+                                          _showConfirmationIcon(widget.imageWithNotes.notes[i].position);
                                         });
                                       },
-                                      child: Text(
-                                        widget.imageWithNotes.notes[i].text,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.black,
-                                        ),
+                                    ),
+                                  )
+                                : GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        widget.imageWithNotes.notes[i].isEditing = true;
+                                      });
+                                    },
+                                    child: Text(
+                                      widget.imageWithNotes.notes[i].text,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black,
                                       ),
                                     ),
-                            ),
+                                  ),
                           ),
                         ),
                   ],
