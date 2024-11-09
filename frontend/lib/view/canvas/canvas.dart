@@ -5,6 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../model/project_model.dart';
 import 'package:provider/provider.dart';
 import '../../controller/project_controller.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Canvas extends StatefulWidget {
   final ImageWithNotes imageWithNotes;
@@ -126,6 +130,49 @@ class _CanvasState extends State<Canvas> {
     });
   }
 
+  Future<void> _saveCanvasAsPdf() async {
+    if (await Permission.storage.request().isGranted) {
+    final pdf = pw.Document();
+
+    // Añade una página al PDF y dibuja la imagen y notas
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Center(
+            child: pw.Column(
+              children: [
+                if (_image != null)
+                  pw.Image(pw.MemoryImage(_image!.readAsBytesSync())),
+                pw.SizedBox(height: 20),
+                pw.Text("Notas:"),
+                pw.Column(
+                  children: widget.imageWithNotes.notes.map((note) {
+                    return pw.Text("• ${note.text}");
+                  }).toList(),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    // Obtén el directorio temporal y guarda el archivo PDF
+    final directory = Directory('/storage/emulated/0/Download');
+    final file = File("${directory.path}/canvas_output.pdf");
+    await file.writeAsBytes(await pdf.save());
+
+    // Muestra un mensaje de confirmación
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("PDF guardado en: ${file.path}")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Permiso de almacenamiento denegado")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,6 +186,10 @@ class _CanvasState extends State<Canvas> {
         ),
         title: const Text('Título Imagen'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.save_alt),
+            onPressed: _saveCanvasAsPdf,
+          ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {},
@@ -228,7 +279,7 @@ class _CanvasState extends State<Canvas> {
                         top: _tempIconPosition!.dy,
                         child: Icon(
                           Icons.check_circle,
-                          color: Colors.blue, //color azul el icono*
+                          color: Colors.blue,
                           size: 30,
                         ),
                       ),
@@ -257,7 +308,6 @@ class _CanvasState extends State<Canvas> {
                                           widget.imageWithNotes.notes[i].text = value;
                                           widget.imageWithNotes.notes[i].isEditing = false;
                                           _textController.clear();
-                                          // Muestra el ícono de confirmación después de guardar la nota
                                           _showConfirmationIcon(widget.imageWithNotes.notes[i].position);
                                         });
                                       },
