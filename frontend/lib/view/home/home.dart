@@ -52,7 +52,6 @@ La aplicación PhotoPost respeta su privacidad y está comprometida con la prote
 
 Los datos personales que recabamos a través de la Aplicación serán utilizados para las siguientes finalidades:
 - Crear y gestionar proyectos en la Aplicación.
-- Registrar y autenticar usuarios para garantizar el acceso adecuado a sus proyectos.
 - Permitir la colaboración y el intercambio de datos, como imágenes, entre los usuarios de un mismo proyecto.
 
 Para más información, consulte el aviso de privacidad completo.''',
