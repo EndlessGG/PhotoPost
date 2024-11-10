@@ -156,7 +156,7 @@ Para más información, consulte el aviso de privacidad completo.''',
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
-                  icon: Icon(Icons.share, color: Colors.blue),
+                  icon: Icon(Icons.share, color: Colors.blue), //icono azul para compartir
                   onPressed: () {
                     // Acción para compartir el proyecto
                   },
