@@ -1,9 +1,19 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../model/project_model.dart';
+import 'package:provider/provider.dart';
+import '../../controller/project_controller.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Canvas extends StatefulWidget {
-  const Canvas({super.key});
+  final ImageWithNotes imageWithNotes;
+
+  const Canvas({super.key, required this.imageWithNotes});
 
   @override
   _CanvasState createState() => _CanvasState();
@@ -16,49 +26,74 @@ class _CanvasState extends State<Canvas> {
   double _currentScale = 1.0;
   final double _minScale = 0.5;
   final double _maxScale = 5.0;
-
-  List<Note> notes = []; // Lista de notas
   final TextEditingController _textController = TextEditingController();
 
-  // Método para tomar una foto
+  // Variables para el ícono temporal
+  Offset? _tempIconPosition;
+  bool _showTempIcon = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.imageWithNotes.notes = widget.imageWithNotes.notes;
+
+    if (widget.imageWithNotes.imagePath.isNotEmpty) {
+      _image = File(widget.imageWithNotes.imagePath);
+    }
+  }
+
   Future<void> _takePhoto() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
-
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
-        notes.clear(); // Limpiar notas al cambiar de imagen
+        widget.imageWithNotes.notes.clear();
+        widget.imageWithNotes.imagePath = pickedFile.path;
       });
+      Provider.of<ProjectController>(context, listen: false).updateImagePath(
+        widget.imageWithNotes,
+        pickedFile.path,
+      );
     }
   }
 
-  // Método para seleccionar una imagen de la galería
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
         _currentScale = 1.0;
-        notes.clear(); // Limpiar notas al cambiar de imagen
+        widget.imageWithNotes.notes.clear();
+        widget.imageWithNotes.imagePath = pickedFile.path;
       });
+      Provider.of<ProjectController>(context, listen: false).updateImagePath(
+        widget.imageWithNotes,
+        pickedFile.path,
+      );
     }
   }
 
-  // Método para agregar una nota
   void _onDoubleTap(TapDownDetails details) {
     setState(() {
-      notes.add(
+      widget.imageWithNotes.notes.add(
         Note(
           text: '',
           position: details.localPosition,
-          isEditing: true, // Hacer que la nota sea editable inicialmente
+          isEditing: true,
         ),
       );
     });
   }
 
-  // Método para aumentar el zoom
+  void _saveNotes() {
+    final projectController = Provider.of<ProjectController>(context, listen: false);
+    projectController.updateNotesForImage(
+      widget.imageWithNotes.imagePath,
+      widget.imageWithNotes.notes,
+    );
+  }
+
   void _zoomin() {
     setState(() {
       if (_currentScale < _maxScale) {
@@ -70,7 +105,6 @@ class _CanvasState extends State<Canvas> {
     });
   }
 
-  // Método para reducir el zoom
   void _zoomOut() {
     setState(() {
       if (_currentScale > _minScale) {
@@ -82,174 +116,226 @@ class _CanvasState extends State<Canvas> {
     });
   }
 
+  void _showConfirmationIcon(Offset position) {
+    setState(() {
+      _tempIconPosition = position;
+      _showTempIcon = true;
+    });
+
+    // Oculta el ícono después de 1 segundo
+    Timer(const Duration(seconds: 1), () {
+      setState(() {
+        _showTempIcon = false;
+      });
+    });
+  }
+
+  Future<void> _saveCanvasAsPdf() async {
+    if (await Permission.storage.request().isGranted) {
+    final pdf = pw.Document();
+
+    // Añade una página al PDF y dibuja la imagen y notas
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Center(
+            child: pw.Column(
+              children: [
+                if (_image != null)
+                  pw.Image(pw.MemoryImage(_image!.readAsBytesSync())),
+                pw.SizedBox(height: 20),
+                pw.Text("Notas:"),
+                pw.Column(
+                  children: widget.imageWithNotes.notes.map((note) {
+                    return pw.Text("• ${note.text}");
+                  }).toList(),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    // Obtén el directorio temporal y guarda el archivo PDF
+    final directory = Directory('/storage/emulated/0/Download');
+    final file = File("${directory.path}/canvas_output.pdf");
+    await file.writeAsBytes(await pdf.save());
+
+    // Muestra un mensaje de confirmación
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("PDF guardado en: ${file.path}")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Permiso de almacenamiento denegado")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _saveNotes();
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text('Título Imagen'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save_alt),
+            onPressed: _saveCanvasAsPdf,
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert),
             onPressed: () {},
           ),
-          title: const Text('Título Imagen'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Container(
-              color: Colors.grey[200],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.bookmark),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.image),
-                    onPressed: () {
-                      _pickImage(); // se invoica al metodo para seleccionar una foto
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.camera),
-                    onPressed: _takePhoto,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.zoom_in),
-                    onPressed: _zoomin,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.zoom_out),
-                    onPressed: _zoomOut,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.text_fields),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.brush),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _isVisible ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isVisible = !_isVisible;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.all(10.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
+        ],
+      ),
+      body: Column(
+        children: [
+          Container(
+            color: Colors.grey[200],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.bookmark),
+                  onPressed: () {},
                 ),
-                child: GestureDetector(
-                  onDoubleTapDown: _onDoubleTap, // Doble clic para agregar nota
-                  child: Stack(
-                    children: [
-                      _image == null
-                          ? const Center(
-                              child: Text('Toma/Selecciona una Foto',
-                                  style: TextStyle(fontSize: 16)),
-                            )
-                          : InteractiveViewer(
-                              boundaryMargin: const EdgeInsets.all(10.0),
-                              minScale: _minScale,
-                              maxScale: _maxScale,
-                              child: Transform.scale(
-                                scale: _currentScale,
-                                child: Image.file(
-                                  _image!,
-                                  fit: BoxFit.contain,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                ),
+                IconButton(
+                  icon: const Icon(Icons.image),
+                  onPressed: _pickImage,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera),
+                  onPressed: _takePhoto,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.zoom_in),
+                  onPressed: _zoomin,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.zoom_out),
+                  onPressed: _zoomOut,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.text_fields),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.brush),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: Icon(_isVisible ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () {
+                    setState(() {
+                      _isVisible = !_isVisible;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+              ),
+              child: GestureDetector(
+                onDoubleTapDown: _onDoubleTap,
+                child: Stack(
+                  children: [
+                    _image == null
+                        ? const Center(
+                            child: Text(
+                              'Toma/Selecciona una Foto',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          )
+                        : InteractiveViewer(
+                            boundaryMargin: const EdgeInsets.all(10.0),
+                            minScale: _minScale,
+                            maxScale: _maxScale,
+                            child: Transform.scale(
+                              scale: _currentScale,
+                              child: Image.file(
+                                _image!,
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                                height: double.infinity,
                               ),
                             ),
-                      // Mostrar las notas encima de la imagen
-                      for (int i = 0; i < notes.length; i++)
+                          ),
+                    if (_showTempIcon && _tempIconPosition != null)
+                      Positioned(
+                        left: _tempIconPosition!.dx,
+                        top: _tempIconPosition!.dy,
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Colors.blue,
+                          size: 30,
+                        ),
+                      ),
+                    if (_isVisible)
+                      for (int i = 0; i < widget.imageWithNotes.notes.length; i++)
                         Positioned(
-                          left: notes[i].position.dx,
-                          top: notes[i].position.dy,
+                          left: widget.imageWithNotes.notes[i].position.dx,
+                          top: widget.imageWithNotes.notes[i].position.dy,
                           child: GestureDetector(
                             onPanUpdate: (details) {
                               setState(() {
-                                notes[i].position = Offset(
-                                  notes[i].position.dx + details.delta.dx,
-                                  notes[i].position.dy + details.delta.dy,
+                                widget.imageWithNotes.notes[i].position = Offset(
+                                  widget.imageWithNotes.notes[i].position.dx + details.delta.dx,
+                                  widget.imageWithNotes.notes[i].position.dy + details.delta.dy,
                                 );
                               });
                             },
-                            child: Container(
-                              color: Colors.white.withOpacity(0.8),
-                              padding: const EdgeInsets.all(4.0),
-                              child: notes[i].isEditing
-                                  ? SizedBox(
-                                      width: 200,
-                                      child: TextField(
-                                        controller: _textController,
-                                        autofocus: true,
-                                        onSubmitted: (value) {
-                                          setState(() {
-                                            notes[i].text = value;
-                                            notes[i].isEditing = false;
-                                            _textController.clear(); // Limpiar el controlador
-                                          });
-                                        },
-                                      ),
-                                    )
-                                  : GestureDetector(
-                                      onTap: () {
+                            child: widget.imageWithNotes.notes[i].isEditing
+                                ? SizedBox(
+                                    width: 200,
+                                    child: TextField(
+                                      controller: _textController,
+                                      autofocus: true,
+                                      onSubmitted: (value) {
                                         setState(() {
-                                          notes[i].isEditing = true; // Permitir editar al tocar
+                                          widget.imageWithNotes.notes[i].text = value;
+                                          widget.imageWithNotes.notes[i].isEditing = false;
+                                          _textController.clear();
+                                          _showConfirmationIcon(widget.imageWithNotes.notes[i].position);
                                         });
                                       },
-                                      child: Text(
-                                        notes[i].text,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.black,
-                                        ),
+                                    ),
+                                  )
+                                : GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        widget.imageWithNotes.notes[i].isEditing = true;
+                                      });
+                                    },
+                                    child: Text(
+                                      widget.imageWithNotes.notes[i].text,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black,
                                       ),
                                     ),
-                            ),
+                                  ),
                           ),
                         ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
-
-// Clase para representar cada nota
-class Note {
-  String text;
-  Offset position;
-  bool isEditing;
-
-  Note({
-    required this.text,
-    required this.position,
-    this.isEditing = false,
-  });
-}
-
