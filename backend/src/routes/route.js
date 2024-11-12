@@ -1,8 +1,10 @@
+const statusController = require('../controllers/statusController')
 const express = require('express')
-const { getAllUsers } = require('../controllers/userController')
 
 const router = express.Router()
 
-router.get('/users', getAllUsers)
+// Ruta de Status: Verificacion de estado del servidor
+router.get('/status-server', statusController.getStatus)
+// mass rutas...
 
 module.exports = router
