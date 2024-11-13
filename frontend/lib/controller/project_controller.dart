@@ -146,6 +146,28 @@ class ProjectController extends ChangeNotifier {
     throw Exception("Image not found");
   }
 
+  Future<void> updateTrazosForImage(String imagePath, List<List<Offset>> newTrazos) async {
+    for (final project in _projects) {
+      for (final room in project.rooms) {
+        try {
+          final image = room.images.firstWhere((img) => img.imagePath == imagePath);
+          image.trazos = newTrazos; // Asigna los nuevos trazos
+          for (final trazo in newTrazos) {
+            for (final punto in trazo) {
+              await _dbHelper.insertTrazo(imagePath.hashCode, punto); // Guardar cada punto en la base de datos
+            }
+          }
+          notifyListeners();
+          return;
+        } catch (e) {
+          // Continúa si la imagen no se encuentra en la habitación actual
+        }
+      }
+    }
+    throw Exception("Imagen no encontrada");
+  }
+
+
   // Método para actualizar la ruta de la imagen en una ImageWithNotes
   Future<void> updateImagePath(ImageWithNotes imageWithNotes, String imagePath) async {
     imageWithNotes.imagePath = imagePath;
