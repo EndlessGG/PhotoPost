@@ -37,7 +37,7 @@ class RegisterView extends StatelessWidget {
                     prefixIcon: Icon(Icons.email, color: Colors.black),
                     labelText: 'Correo',
                     filled: true,
-                    fillColor: Color(0xFFEEEEEE),
+                    fillColor: Colors.grey[200],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       borderSide: BorderSide.none,
@@ -52,7 +52,7 @@ class RegisterView extends StatelessWidget {
                     prefixIcon: Icon(Icons.lock, color: Colors.black),
                     labelText: 'Contraseña',
                     filled: true,
-                    fillColor: Color(0xFFEEEEEE),
+                    fillColor: Colors.grey[200],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       borderSide: BorderSide.none,
@@ -67,7 +67,7 @@ class RegisterView extends StatelessWidget {
                     prefixIcon: Icon(Icons.lock_outline, color: Colors.black),
                     labelText: 'Confirmar Contraseña',
                     filled: true,
-                    fillColor: Color(0xFFEEEEEE),
+                    fillColor: Colors.grey[200],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       borderSide: BorderSide.none,
@@ -91,7 +91,7 @@ class RegisterView extends StatelessWidget {
                     ),
                     child: Text(
                       'Registrarse',
-                      style: TextStyle(fontSize: 16.0, color: Colors.white),
+                      style: TextStyle(fontSize: 18.0, color: Colors.white),
                     ),
                   ),
                 ),

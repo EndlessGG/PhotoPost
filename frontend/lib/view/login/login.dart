@@ -89,7 +89,7 @@ class LoginView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '¿No tienes cuenta?',
+                    '¿ No tienes cuenta ?',
                     style: TextStyle(fontSize: 16),
                   ),
                   SizedBox(width: 5),
