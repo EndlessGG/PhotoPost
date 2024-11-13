@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../model/project_model.dart';
@@ -21,14 +22,15 @@ class Canvas extends StatefulWidget {
 
 class _CanvasState extends State<Canvas> {
   bool _isVisible = true;
+  bool _isDrawing = false;
   File? _image;
   final ImagePicker _picker = ImagePicker();
   double _currentScale = 1.0;
   final double _minScale = 0.5;
   final double _maxScale = 5.0;
   final TextEditingController _textController = TextEditingController();
+  List<Offset> _points = [];
 
-  // Variables para el ícono temporal
   Offset? _tempIconPosition;
   bool _showTempIcon = false;
 
@@ -86,6 +88,12 @@ class _CanvasState extends State<Canvas> {
     });
   }
 
+  void _toggleDrawingMode() {
+    setState(() {
+      _isDrawing = !_isDrawing;
+    });
+  }
+
   void _saveNotes() {
     final projectController = Provider.of<ProjectController>(context, listen: false);
     projectController.updateNotesForImage(
@@ -122,7 +130,6 @@ class _CanvasState extends State<Canvas> {
       _showTempIcon = true;
     });
 
-    // Oculta el ícono después de 1 segundo
     Timer(const Duration(seconds: 1), () {
       setState(() {
         _showTempIcon = false;
@@ -132,37 +139,34 @@ class _CanvasState extends State<Canvas> {
 
   Future<void> _saveCanvasAsPdf() async {
     if (await Permission.storage.request().isGranted) {
-    final pdf = pw.Document();
+      final pdf = pw.Document();
 
-    // Añade una página al PDF y dibuja la imagen y notas
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Center(
-            child: pw.Column(
-              children: [
-                if (_image != null)
-                  pw.Image(pw.MemoryImage(_image!.readAsBytesSync())),
-                pw.SizedBox(height: 20),
-                pw.Text("Notas:"),
-                pw.Column(
-                  children: widget.imageWithNotes.notes.map((note) {
-                    return pw.Text("• ${note.text}");
-                  }).toList(),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Center(
+              child: pw.Column(
+                children: [
+                  if (_image != null)
+                    pw.Image(pw.MemoryImage(_image!.readAsBytesSync())),
+                  pw.SizedBox(height: 20),
+                  pw.Text("Notas:"),
+                  pw.Column(
+                    children: widget.imageWithNotes.notes.map((note) {
+                      return pw.Text("• ${note.text}");
+                    }).toList(),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
 
-    // Obtén el directorio temporal y guarda el archivo PDF
-    final directory = Directory('/storage/emulated/0/Download');
-    final file = File("${directory.path}/canvas_output.pdf");
-    await file.writeAsBytes(await pdf.save());
+      final directory = Directory('/storage/emulated/0/Download');
+      final file = File("${directory.path}/canvas_output.pdf");
+      await file.writeAsBytes(await pdf.save());
 
-    // Muestra un mensaje de confirmación
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("PDF guardado en: ${file.path}")),
       );
@@ -170,6 +174,24 @@ class _CanvasState extends State<Canvas> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Permiso de almacenamiento denegado")),
       );
+    }
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (_isDrawing) {
+      setState(() {
+        _points.add(details.localPosition);
+      });
+    }
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    if (_isDrawing) {
+      setState(() {
+        _points.add(Offset.infinite); // Marca el fin del trazo
+        widget.imageWithNotes.trazos.add(List.from(_points)); // Guarda el trazo completo
+        _points.clear(); // Limpia los puntos temporales
+      });
     }
   }
 
@@ -203,33 +225,15 @@ class _CanvasState extends State<Canvas> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.bookmark),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.image),
-                  onPressed: _pickImage,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.camera),
-                  onPressed: _takePhoto,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.zoom_in),
-                  onPressed: _zoomin,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.zoom_out),
-                  onPressed: _zoomOut,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.text_fields),
-                  onPressed: () {},
-                ),
+                IconButton(icon: const Icon(Icons.bookmark), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.image), onPressed: _pickImage),
+                IconButton(icon: const Icon(Icons.camera), onPressed: _takePhoto),
+                IconButton(icon: const Icon(Icons.zoom_in), onPressed: _zoomin),
+                IconButton(icon: const Icon(Icons.zoom_out), onPressed: _zoomOut),
+                IconButton(icon: const Icon(Icons.text_fields), onPressed: () {}),
                 IconButton(
                   icon: const Icon(Icons.brush),
-                  onPressed: () {},
+                  onPressed: _toggleDrawingMode,
                 ),
                 IconButton(
                   icon: Icon(_isVisible ? Icons.visibility : Icons.visibility_off),
@@ -250,6 +254,8 @@ class _CanvasState extends State<Canvas> {
               ),
               child: GestureDetector(
                 onDoubleTapDown: _onDoubleTap,
+                onPanUpdate: _onPanUpdate,
+                onPanEnd: _onPanEnd,
                 child: Stack(
                   children: [
                     _image == null
@@ -329,6 +335,10 @@ class _CanvasState extends State<Canvas> {
                                   ),
                           ),
                         ),
+                    CustomPaint(
+                      size: Size.infinite,
+                      painter: _DrawingPainter(widget.imageWithNotes.trazos, _points),
+                    ),
                   ],
                 ),
               ),
@@ -338,4 +348,37 @@ class _CanvasState extends State<Canvas> {
       ),
     );
   }
+}
+
+class _DrawingPainter extends CustomPainter {
+  final List<List<Offset>> trazos;
+  final List<Offset> currentPoints;
+
+  _DrawingPainter(this.trazos, this.currentPoints);
+
+  @override
+  void paint(ui.Canvas canvas, ui.Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+
+    for (var trazo in trazos) {
+      for (int i = 0; i < trazo.length - 1; i++) {
+        if (trazo[i] != Offset.infinite && trazo[i + 1] != Offset.infinite) {
+          canvas.drawLine(trazo[i], trazo[i + 1], paint);
+        }
+      }
+    }
+
+    for (int i = 0; i < currentPoints.length - 1; i++) {
+      if (currentPoints[i] != Offset.infinite && currentPoints[i + 1] != Offset.infinite) {
+        canvas.drawLine(currentPoints[i], currentPoints[i + 1], paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DrawingPainter oldDelegate) =>
+      oldDelegate.currentPoints != currentPoints || oldDelegate.trazos != trazos;
 }
