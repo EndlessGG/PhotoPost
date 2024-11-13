@@ -95,7 +95,7 @@ class LoginView extends StatelessWidget {
                   SizedBox(width: 5),
                   GestureDetector(
                     onTap: () {
-                      // Navigate to RegisterView
+                      
                       Navigator.push(
                         context,
                         MaterialPageRoute(
