@@ -1,20 +1,21 @@
-import 'dart:convert';
-import 'api_connection.dart'; // importacion de Conexion de la API
+import '../services/api_connection.dart';
 
-class ServerStatus {
-  final ApiConnection _apiConnection = ApiConnection(); // Instancia de ApiConnection
+class StatusServer {
+  final ApiConnection apiConnection;
 
-  // Metodo para verificar el estado del servidor con uso del metodo get de api_connection.dart en lane 10
-  Future<String> checkServerStatus() async {
-    final response = await _apiConnection.get('/status-server'); // Se llama al metodo GET con la ruta '/status-server' que esta en la ruta del BackEnd
+  StatusServer({required this.apiConnection});
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['message'];
+  /// Método para obtener el estado del servidor
+  Future<Map<String, dynamic>> fetchStatus() async {
+    final data = await apiConnection.get('/status');
+
+    if (data['status'] == 'ok') {
+      return {
+        'message': data['message'],
+        'userCount': data['userCount'],
+      };
     } else {
-      throw Exception('Error al obtener el estado del servidor');
+      throw Exception('Respuesta no válida: ${data['status']}');
     }
   }
-
-  // Mas metodos relacionados con el estado del servidor...
 }
