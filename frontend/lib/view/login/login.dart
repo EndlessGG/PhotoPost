@@ -70,7 +70,7 @@ class LoginView extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (context) => HomeView()),
                   );
-                },
+                },//Texto "Iniciar sesion "
                 child: Text(
                   'Iniciar Sesión',
                   style: TextStyle(fontSize: 18),
@@ -89,13 +89,13 @@ class LoginView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '¿No tienes cuenta?',
+                    '¿ No tienes cuenta ?',
                     style: TextStyle(fontSize: 16),
                   ),
                   SizedBox(width: 5),
                   GestureDetector(
                     onTap: () {
-                      // Navigate to RegisterView
+                      
                       Navigator.push(
                         context,
                         MaterialPageRoute(

@@ -77,6 +77,17 @@ class DatabaseHelper {
         FOREIGN KEY (imageId) REFERENCES images (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE trazos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        imageId INTEGER,
+        positionX REAL,
+        positionY REAL,
+        FOREIGN KEY (imageId) REFERENCES images (id) ON DELETE CASCADE
+      )
+    ''');
+
   }
 
   // CRUD Operations for Project
@@ -174,13 +185,16 @@ class DatabaseHelper {
     List<ImageWithNotes> images = [];
     for (var map in maps) {
       final notes = await getNotes(map['id'] as int);
+      final trazos = await getTrazos(map['id'] as int); // Obtiene los trazos
       images.add(ImageWithNotes(
         imagePath: map['imagePath'] as String,
         notes: notes,
+        trazos: trazos,
       ));
     }
     return images;
   }
+
 
   // CRUD Operations for Note
 
@@ -214,6 +228,44 @@ class DatabaseHelper {
       );
     });
   }
+
+  Future<void> insertTrazo(int imageId, Offset punto) async {
+    final db = await database;
+    await db.insert(
+      'trazos',
+      {
+        'imageId': imageId,
+        'positionX': punto.dx,
+        'positionY': punto.dy,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<List<Offset>>> getTrazos(int imageId) async {
+    final db = await database;
+    final maps = await db.query(
+      'trazos',
+      where: 'imageId = ?',
+      whereArgs: [imageId],
+    );
+
+    List<List<Offset>> trazos = [];
+    List<Offset> trazoActual = [];
+    for (var map in maps) {
+      Offset punto = Offset(map['positionX'] as double, map['positionY'] as double);
+      if (punto == Offset.infinite) {
+        trazos.add(List.from(trazoActual)); // Guarda el trazo actual y reinicia
+        trazoActual = [];
+      } else {
+        trazoActual.add(punto); // Añadir puntos a trazo actual
+      }
+    }
+    if (trazoActual.isNotEmpty) trazos.add(trazoActual); // Añadir el último trazo
+    return trazos;
+  }
+
+
 
   // Delete all entries (useful for resetting database during testing)
   Future<void> clearDatabase() async {

@@ -29,11 +29,14 @@ class Room {
 class ImageWithNotes {
   String imagePath;
   List<Note> notes; // Use List<Note> instead of List<String>
+  List<List<Offset>> trazos; // Agregar trazos para almacenar cada trazo como lista de puntos
 
   ImageWithNotes({
     required this.imagePath,
     List<Note>? notes,
-  }) : notes = notes ?? [];
+    List<List<Offset>>? trazos,
+  }) : notes = notes ?? [],
+      trazos = trazos ?? []; // Inicializar como lista vacía
 
   // Optional: JSON serialization to save/load the data
   Map<String, dynamic> toJson() => {
