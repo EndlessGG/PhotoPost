@@ -70,7 +70,7 @@ class LoginView extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (context) => HomeView()),
                   );
-                },//Texto "Iniciar sesion "
+                },//Texto "Iniciar sesion " //
                 child: Text(
                   'Iniciar Sesión',
                   style: TextStyle(fontSize: 18),
