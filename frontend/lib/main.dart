@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controller/project_controller.dart';
-import './view/home/home.dart';
 import './view/login/login.dart';
 
 void main() {
