@@ -19,9 +19,7 @@ class ProjectController extends ChangeNotifier {
     notifyListeners();
   }
 
-
   // CRUD para Project
-
   Future<void> addProject(String name, String? imagePath) async {
     try {
       final project = Project(
@@ -40,7 +38,6 @@ class ProjectController extends ChangeNotifier {
       print("Error al añadir el proyecto: $e");
     }
   }
-
 
   Future<Project?> getProjectById(String projectId) async {
     try {
