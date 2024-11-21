@@ -39,6 +39,7 @@ class ImageWithNotes {
       trazos = trazos ?? []; // Inicializar como lista vacía
 
   // Optional: JSON serialization to save/load the data
+  
   Map<String, dynamic> toJson() => {
         'imagePath': imagePath,
         'notes': notes.map((note) => note.toJson()).toList(),
@@ -53,6 +54,7 @@ class ImageWithNotes {
 }
 
 // Define Note as part of the model to store text and position
+
 class Note {
   String text;
   Offset position;
