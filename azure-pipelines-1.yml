@@ -1,0 +1,38 @@
+trigger:
+- main  # Cambia 'main' si el branch principal es diferente
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# 1. Instalar Flutter SDK
+- script: |
+    sudo apt-get update
+    sudo apt-get install -y curl unzip xz-utils
+    curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.13.0-stable.tar.xz
+    tar xf flutter_linux_3.13.0-stable.tar.xz
+    echo 'export PATH="$PATH:$PWD/flutter/bin"' >> $BASH_ENV
+  displayName: 'Instalar Flutter SDK'
+
+# 2. Verificar instalación de Flutter
+- script: flutter doctor
+  displayName: 'Verificar Flutter'
+
+# 3. Instalar dependencias
+- script: flutter pub get
+  displayName: 'Instalar dependencias'
+
+# 4. Ejecutar pruebas
+- script: flutter test
+  displayName: 'Ejecutar pruebas'
+
+# 5. Construir aplicación para Android
+- script: flutter build apk --release
+  displayName: 'Construir APK'
+
+# 6. Publicar el APK como artefacto
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: 'build/app/outputs/flutter-apk/app-release.apk'
+    artifactName: 'release-apk'
+    publishLocation: 'Container'
