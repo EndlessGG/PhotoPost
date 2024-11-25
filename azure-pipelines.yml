@@ -1,29 +1,37 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
 trigger:
-- main
+- main  # Cambia 'main' si tu rama principal tiene otro nombre.
 
-resources:
-- repo: self
+pool:
+  name: Default  # Usa el nombre de tu agent pool.
 
-variables:
-  tag: '$(Build.BuildId)'
+steps:
+# 1. Cambiar al directorio del proyecto
+- script: |
+    echo "Navegando al directorio del proyecto..."
+    cd C:\projects\PhotoPost\frontend
+  displayName: "Cambiar al directorio del proyecto"
 
-stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: Docker@2
-      displayName: Build an image
-      inputs:
-        command: build
-        dockerfile: '**/Dockerfile'
-        tags: |
-          $(tag)
+# 2. Instalar dependencias de Flutter
+- script: |
+    cd C:\projects\PhotoPost\frontend
+    flutter pub get
+  displayName: "Instalar dependencias"
+
+# 3. Ejecutar pruebas
+- script: |
+    cd C:\projects\PhotoPost\frontend
+    flutter test
+  displayName: "Ejecutar pruebas"
+
+# 4. Construir el APK en modo release
+- script: |
+    cd C:\projects\PhotoPost\frontend
+    flutter build apk --release
+  displayName: "Construir APK"
+
+# 5. Publicar el APK como artefacto
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: 'C:\projects\PhotoPost\frontend\build\app\outputs\flutter-apk\app-release.apk'
+    artifactName: 'FlutterAPK'
+    publishLocation: 'Container'
