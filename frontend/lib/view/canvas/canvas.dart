@@ -227,7 +227,7 @@ class _CanvasState extends State<Canvas> {
               children: [
                 IconButton(icon: const Icon(Icons.bookmark), onPressed: () {}),
                 IconButton(icon: const Icon(Icons.image), onPressed: _pickImage),
-                IconButton(icon: const Icon(Icons.camera), onPressed: _takePhoto),
+                IconButton(icon: const Icon(Icons.camera), onPressed: _takePhoto), 
                 IconButton(icon: const Icon(Icons.zoom_in), onPressed: _zoomin),
                 IconButton(icon: const Icon(Icons.zoom_out), onPressed: _zoomOut),
                 IconButton(icon: const Icon(Icons.text_fields), onPressed: () {}),
@@ -279,7 +279,7 @@ class _CanvasState extends State<Canvas> {
                               ),
                             ),
                           ),
-                    if (_showTempIcon && _tempIconPosition != null)
+                    if (_showTempIcon && _tempIconPosition != null) //posicion
                       Positioned(
                         left: _tempIconPosition!.dx,
                         top: _tempIconPosition!.dy,
