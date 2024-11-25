@@ -275,6 +275,6 @@ class DatabaseHelper {
     await db.delete('images');
     await db.delete('notes');
   }
-
+//ejemplo
   
 }
