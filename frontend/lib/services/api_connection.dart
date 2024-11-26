@@ -1,43 +1,84 @@
-//import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ApiConnection {
   final String baseUrl;
 
-  ApiConnection() : baseUrl = 'http://192.168.100.6:3000/api';
+  ApiConnection({this.baseUrl = "https://photopost.up.railway.app"});
 
-  // Metodo para realizar solicitudes GET
-  Future<http.Response> get(String endpoint) async {
+  /// Metodo GET
+  Future<Map<String, dynamic>> get(String endpoint) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return await http.get(url);
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error GET: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión GET: $e');
+    }
   }
 
-  // Mwtodo para realizar solicitudes POST
-  Future<http.Response> post(String endpoint, Map<String, dynamic> data) async {
+  /// Metodo POST
+  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> body) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(data),
-    );
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error POST: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión POST: $e');
+    }
   }
 
-  // Metodo para realizar solicitudes PUT
-  Future<http.Response> put(String endpoint, Map<String, dynamic> data) async {
+  /// Metodo PUT
+  Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> body) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return await http.put(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(data),
-    );
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error PUT: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión PUT: $e');
+    }
   }
 
-  // Metodo para realizar solicitudes DELETE
-  Future<http.Response> delete(String endpoint) async {
+  /// Metodo DELETE
+  Future<Map<String, dynamic>> delete(String endpoint) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return await http.delete(url);
-  }
 
-  // Este archivo es solo la conexion, puedes hacer uso de esta conexion como en el ejemplo de status_server segun el metodo que requieras
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return response.body.isNotEmpty ? jsonDecode(response.body) : {};
+      } else {
+        throw Exception('Error DELETE: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión DELETE: $e');
+    }
+  }
 }

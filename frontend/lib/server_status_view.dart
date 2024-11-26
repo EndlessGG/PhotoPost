@@ -1,36 +1,51 @@
 import 'package:flutter/material.dart';
-import './services/status_server.dart'; // Asegúrate de que esta importación sea correcta
+import './services/status_server.dart';
+import './services/api_connection.dart';
 
-class ServerStatusView extends StatefulWidget {
+class StatusView extends StatefulWidget {
+  const StatusView({Key? key}) : super(key: key);
+
   @override
-  _ServerStatusViewState createState() => _ServerStatusViewState();
+  _StatusViewState createState() => _StatusViewState();
 }
 
-class _ServerStatusViewState extends State<ServerStatusView> {
-  late Future<String> _serverStatus;
+class _StatusViewState extends State<StatusView> {
+  final StatusServer statusRepository = 
+      StatusServer(apiConnection: ApiConnection());
+
+  late Future<Map<String, dynamic>> _statusFuture;
 
   @override
   void initState() {
     super.initState();
-    _serverStatus = ServerStatus().checkServerStatus();
+    _statusFuture = statusRepository.fetchStatus();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Estado del Servidor'),
+        title: Text('Estado del Servidor'),
       ),
       body: Center(
-        child: FutureBuilder<String>(
-          future: _serverStatus,
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _statusFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return CircularProgressIndicator();
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
+            } else if (snapshot.hasData) {
+              final data = snapshot.data!;
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Mensaje: ${data['message']}'),
+                  Text('Cantidad de usuarios: ${data['userCount']}'),
+                ],
+              );
             } else {
-              return Text('Estado del servidor: ${snapshot.data}');
+              return Text('No se encontraron datos.');
             }
           },
         ),
