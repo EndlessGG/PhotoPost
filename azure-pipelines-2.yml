@@ -1,0 +1,51 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  FLUTTER_VERSION: "stable"
+
+steps:
+# 1. Instalar dependencias necesarias para Flutter
+- script: |
+    sudo apt-get update
+    sudo apt-get install -y curl git unzip xz-utils zip libglu1-mesa
+  displayName: 'Install dependencies'
+
+# 2. Descargar e instalar Flutter
+- script: |
+    git clone https://github.com/flutter/flutter.git -b $FLUTTER_VERSION --depth 1
+    echo "export PATH=$PATH:`pwd`/flutter/bin" >> $BASH_ENV
+    source $BASH_ENV
+    flutter doctor
+  displayName: 'Install Flutter'
+
+# 3. Navegar a la carpeta del frontend
+- script: |
+    cd frontend
+    flutter pub get
+  displayName: 'Prepare Flutter Project'
+
+# 4. Ejecutar pruebas unitarias en Flutter
+- script: |
+    cd frontend
+    flutter test
+  displayName: 'Run Flutter Tests'
+
+# 5. Construir el APK o AAB
+- script: |
+    cd frontend
+    flutter build apk --release
+    # O para AAB:
+    # flutter build appbundle --release
+  displayName: 'Build APK or AAB'
+
+# 6. Publicar artefactos generados
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'frontend/build/app/outputs/flutter-apk'
+    ArtifactName: 'FlutterApp'
+    publishLocation: 'Container'
+  displayName: 'Publish Build Artifacts'
