@@ -1,0 +1,51 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+# 1. Instalar dependencias necesarias para Flutter
+- script: |
+    sudo apt-get update
+    sudo apt-get install -y curl git unzip xz-utils zip libglu1-mesa
+  displayName: 'Install dependencies'
+
+# 2. Descargar e instalar Flutter
+- script: |
+    git clone https://github.com/flutter/flutter.git -b stable --depth 1
+    echo "export PATH=$PATH:`pwd`/flutter/bin" >> $BASH_ENV
+    source $BASH_ENV
+    flutter doctor
+  displayName: 'Install Flutter'
+
+# 3. Configurar el emulador de Android
+- script: |
+    sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+    sudo apt-get install -y android-sdk
+    echo "export ANDROID_HOME=/usr/lib/android-sdk" >> $BASH_ENV
+    echo "export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools/bin" >> $BASH_ENV
+    source $BASH_ENV
+    sdkmanager --update
+    sdkmanager "system-images;android-30;google_apis;x86_64"
+    sdkmanager "emulator"
+    avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" -d pixel
+  displayName: 'Setup Android Emulator'
+
+# 4. Iniciar el emulador
+- script: |
+    emulator -avd test -no-snapshot -no-window &
+    adb wait-for-device
+  displayName: 'Start Emulator'
+
+# 5. Ejecutar la aplicación Flutter en el emulador
+- script: |
+    flutter pub get
+    flutter emulators --launch test
+    flutter run --no-sound-null-safety
+  displayName: 'Run Flutter App'
+
+# 6. (Opcional) Ejecutar pruebas en el emulador
+- script: |
+    flutter test
+  displayName: 'Run Tests'
