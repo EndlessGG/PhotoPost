@@ -1,0 +1,36 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Instalar Flutter SDK
+- task: UsePythonVersion@0
+  inputs:
+	versionSpec: '3.x'
+	addToPath: true
+
+- script: |
+	sudo apt-get update
+	sudo apt-get install -y curl unzip xz-utils
+	curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.13.0-stable.tar.xz
+	tar xf flutter_linux_3.13.0-stable.tar.xz
+	echo 'export PATH="$PATH:$PWD/flutter/bin"' >> $BASH_ENV
+  displayName: 'Instalar Flutter SDK'
+
+# Verificar instalación de Flutter
+- script: flutter doctor
+  displayName: 'Verificar Flutter'
+
+# Instalar dependencias
+- script: flutter pub get
+  displayName: 'Instalar dependencias'
+
+# Ejecutar pruebas
+- script: flutter test
+  displayName: 'Ejecutar pruebas'
+
+# Construir aplicación para Android
+- script: flutter build apk --release
+  displayName: 'Construir APK'
