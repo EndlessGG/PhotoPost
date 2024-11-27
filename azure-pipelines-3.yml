@@ -1,0 +1,38 @@
+# azure-pipelines.yml
+name: Set up CI for Flutter frontend with Azure Pipelines
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  # Instalar Flutter
+  - task: UseFlutter@1
+    inputs:
+      version: 'stable'
+
+  # Recuperar dependencias del proyecto
+  - script: flutter pub get
+    displayName: 'Obtener dependencias de Flutter'
+
+  # Verificar el código con análisis estático
+  - script: flutter analyze
+    displayName: 'Análisis estático del código'
+
+  # Ejecutar las pruebas unitarias
+  - script: flutter test
+    displayName: 'Ejecutar pruebas unitarias'
+
+  # Compilar y ejecutar la app
+  - script: flutter build apk --release
+    displayName: 'Compilar APK para Android'
+
+  # Opcional: Publicar artefactos
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'build/app/outputs/flutter-apk'
+      artifactName: 'FlutterAPK'
+      publishLocation: 'pipeline'
