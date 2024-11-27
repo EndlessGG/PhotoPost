@@ -1,0 +1,31 @@
+trigger:
+- main  # Cambia 'main' si tu rama principal tiene otro nombre.
+
+pool:
+  name: Default  # Usa el nombre de tu agent pool.
+
+steps:
+# 1. Cambiar al directorio del proyecto
+- script: |
+    echo "Navegando al directorio del proyecto..."
+    cd C:\projects\PhotoPost\frontend
+  displayName: "Cambiar al directorio del proyecto"
+
+# 2. Instalar dependencias de Flutter
+- script: |
+    cd C:\projects\PhotoPost\frontend
+    flutter pub get
+  displayName: "Instalar dependencias"
+
+# 3. Construir el APK en modo release
+- script: |
+    cd C:\projects\PhotoPost\frontend
+    flutter build apk --release
+  displayName: "Construir APK"
+
+# 4. Publicar el APK como artefacto
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: 'C:\projects\PhotoPost\frontend\build\app\outputs\flutter-apk\app-release.apk'
+    artifactName: 'FlutterAPK'
+    publishLocation: 'Container'
